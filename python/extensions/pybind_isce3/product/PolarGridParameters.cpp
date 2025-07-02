@@ -6,7 +6,6 @@
 #include <isce3/core/DateTime.h>
 #include <isce3/core/LookSide.h>
 #include <isce3/core/Linspace.h>
-#include <isce3/product/PolarGridProduct.h>
 
 namespace py = pybind11;
 
@@ -115,8 +114,8 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                 py::overload_cast<>(&PolarGridParameters::azimuthCenterPixel, py::const_),
                 py::overload_cast<const size_t&>(&PolarGridParameters::azimuthCenterPixel))
         .def_property("lookside",
-                py::overload_cast<>(&RadarGridParameters::lookSide, py::const_),
-                py::overload_cast<LookSide>(&RadarGridParameters::lookSide))
+                py::overload_cast<>(&PolarGridParameters::lookSide, py::const_),
+                py::overload_cast<LookSide>(&PolarGridParameters::lookSide))
         .def_property("width",
                 py::overload_cast<>(&PolarGridParameters::width, py::const_),
                 py::overload_cast<const size_t&>(&PolarGridParameters::width))

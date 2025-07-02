@@ -91,6 +91,7 @@ math/polyfunc.cpp
 math/RootFind1dNewton.cpp
 math/RootFind1dSecant.cpp
 polsar/symmetrize.cpp
+product/PolarGridParameters.cpp
 product/RadarGridParameters.cpp
 product/GeoGridParameters.cpp
 product/RadarGridProduct.cpp

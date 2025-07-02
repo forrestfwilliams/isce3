@@ -44,23 +44,6 @@ class isce3::product::PolarGridParameters {
         inline PolarGridParameters&
         operator=(const PolarGridParameters& pgparam);
 
-        /** Get the look direction */
-        inline isce3::core::LookSide lookSide() const { return _lookSide; }
-
-        /** Set look direction */
-        inline void lookSide(isce3::core::LookSide side) { _lookSide = side; }
-
-        /** Set look direction from a string */
-        inline void lookSide(const std::string &);
-
-        /** Get reference epoch DateTime*/
-        inline const isce3::core::DateTime & refEpoch() const { return _refEpoch; }
-
-        /** Set reference epoch DateTime
-         *
-         * Other dependent parameters like sensingStart are not modified. Use with caution.*/
-        inline void refEpoch(const isce3::core::DateTime &epoch) { _refEpoch = epoch; }
-
         /** Get sensing start time in seconds since reference epoch */
         inline double sensingStart() const { return _sensingStart; }
 
@@ -133,6 +116,15 @@ class isce3::product::PolarGridParameters {
         /** Set center azimuth pixel */
         inline void azimuthCenterPixel(const size_t & t) { _azimuthCenterPixel = t; }
 
+        /** Get the look direction */
+        inline isce3::core::LookSide lookSide() const { return _lookSide; }
+
+        /** Set look direction */
+        inline void lookSide(isce3::core::LookSide side) { _lookSide = side; }
+
+        /** Set look direction from a string */
+        inline void lookSide(const std::string &);
+
         /** Get radar grid length */
         inline size_t length() const { return _rlength; }
 
@@ -144,6 +136,14 @@ class isce3::product::PolarGridParameters {
 
         /** Set radar grid width */
         inline void width(const size_t & t) { _rwidth = t; }
+
+        /** Get reference epoch DateTime*/
+        inline const isce3::core::DateTime & refEpoch() const { return _refEpoch; }
+
+        /** Set reference epoch DateTime
+         *
+         * Other dependent parameters like sensingStart are not modified. Use with caution.*/
+        inline void refEpoch(const isce3::core::DateTime &epoch) { _refEpoch = epoch; }
 
         /** Get total number of radar grid elements */
         inline size_t size() const { return _rlength * _rwidth; }
@@ -167,7 +167,7 @@ class isce3::product::PolarGridParameters {
 
         /** Polar angle rate at center pixel */
         double _polarAngleRate;
-        
+
         /** Polar aperture scale factor at center pixel */
         double _polarApertureScaleFactor;
 
@@ -203,19 +203,17 @@ class isce3::product::PolarGridParameters {
 };
 
 isce3::product::PolarGridParameters::PolarGridParameters()
-    : _lookSide(isce3::core::LookSide::Left), _sensingStart {0},
-      _wavelength {0}, _centerRange {0}, _centerRangeRate {0},
+    : _sensingStart {0}, _wavelength {0}, _centerRange {0}, _centerRangeRate {0},
       _polarAngle {0}, _polarAngleRate {0},
       _polarApertureScaleFactor {0}, _polarApertureScaleFactorRate {0},
       _rangePixelSpacing {0}, _azimuthPixelSpacing {0},
-      _rangeCenterPixel {0}, _azimuthCenterPixel {0},
+      _rangeCenterPixel {0}, _azimuthCenterPixel {0}, _lookSide(isce3::core::LookSide::Left),
       _rlength {0}, _rwidth {0}, _refEpoch {1} {}
 
 // Copy constructors
 /** @param[in] pgparam PolarGridParameters object */
 isce3::product::PolarGridParameters::
 PolarGridParameters(const PolarGridParameters & pgparams) :
-    _lookSide(pgparams.lookSide()),
     _sensingStart(pgparams.sensingStart()),
     _wavelength(pgparams.wavelength()),
     _centerRange(pgparams.centerRange()),
@@ -228,6 +226,7 @@ PolarGridParameters(const PolarGridParameters & pgparams) :
     _azimuthPixelSpacing(pgparams.azimuthPixelSpacing()),
     _rangeCenterPixel(pgparams.rangeCenterPixel()),
     _azimuthCenterPixel(pgparams.azimuthCenterPixel()),
+    _lookSide(pgparams.lookSide()),
     _rlength(pgparams.length()),
     _rwidth(pgparams.width()),
     _refEpoch(pgparams.refEpoch()) { validate(); }
@@ -275,7 +274,6 @@ PolarGridParameters(double sensingStart,
                     size_t length,
                     size_t width,
                     isce3::core::DateTime refEpoch) :
-    _lookSide(lookSide),
     _sensingStart(sensingStart),
     _wavelength(wavelength),
     _centerRange(centerRange),
@@ -288,6 +286,7 @@ PolarGridParameters(double sensingStart,
     _azimuthPixelSpacing(azimuthPixelSpacing),
     _rangeCenterPixel(rangeCenterPixel),
     _azimuthCenterPixel(azimuthCenterPixel),
+    _lookSide(lookSide),
     _rlength(length),
     _rwidth(width),
     _refEpoch(refEpoch) { validate(); }

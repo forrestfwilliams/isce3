@@ -159,6 +159,7 @@ product/ProcessingInformation.h
 product/RadarGridProduct.h
 product/GeoGridProduct.h
 product/RadarGridParameters.h
+product/PolarGridParameters.h
 product/Serialization.h
 product/SubSwaths.h
 product/Swath.h

@@ -2,6 +2,7 @@
 
 #include "RadarGridParameters.h"
 #include "GeoGridParameters.h"
+#include "PolarGridParameters.h"
 #include "SubSwaths.h"
 #include "Swath.h"
 #include "Grid.h"
@@ -18,6 +19,8 @@ void addsubmodule_product(py::module & m)
         m_product, "GeoGridParameters");
     py::class_<isce3::product::RadarGridParameters> pyRadarGridParameters(
         m_product, "RadarGridParameters");
+    py::class_<isce3::product::PolarGridParameters> pyPolarGridParameters(
+        m_product, "PolarGridParameters");
     py::class_<isce3::product::SubSwaths> pySubSwaths(m_product, "SubSwaths");
     py::class_<isce3::product::Swath> pySwath(m_product, "Swath");
     py::class_<isce3::product::Grid> pyGrid(m_product, "Grid");
@@ -27,6 +30,7 @@ void addsubmodule_product(py::module & m)
     // add bindings
     addbinding(pyGeoGridParameters);
     addbinding(pyRadarGridParameters);
+    addbinding(pyPolarGridParameters);
     addbinding(pySubSwaths);
     addbinding(pySwath);
     addbinding(pyGrid);
