@@ -158,6 +158,7 @@ product/Metadata.h
 product/ProcessingInformation.h
 product/RadarGridProduct.h
 product/GeoGridProduct.h
+product/RngAzmGridParameters.h
 product/RadarGridParameters.h
 product/PolarGridParameters.h
 product/Serialization.h

@@ -12,8 +12,9 @@
 #include <isce3/core/LookSide.h>
 #include <isce3/core/TimeDelta.h>
 #include <isce3/except/Error.h>
+#include <isce3/product/RngAzmGridParameters.h>
 
-class isce3::product::RadarGridParameters {
+class isce3::product::RadarGridParameters: public RngAzmGridParameters {
 
     public:
         /** Default constructor */

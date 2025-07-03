@@ -12,8 +12,9 @@
 #include <isce3/core/LookSide.h>
 #include <isce3/core/TimeDelta.h>
 #include <isce3/except/Error.h>
+#include <isce3/product/RngAzmGridParameters.h>
 
-class isce3::product::PolarGridParameters {
+class isce3::product::PolarGridParameters : public RngAzmGridParameters {
 
     public:
         /** Default constructor */
@@ -147,6 +148,27 @@ class isce3::product::PolarGridParameters {
 
         /** Get total number of radar grid elements */
         inline size_t size() const { return _rlength * _rwidth; }
+
+        /** Crop/ Expand while keeping the spacing the same with top left offset and size */
+        inline PolarGridParameters offsetAndResize(double yoff, double xoff, size_t ysize, size_t xsize) const
+        {
+            return PolarGridParameters( sensingStart(),
+                                        wavelength(),
+                                        centerRange(),
+                                        centerRangeRate(),
+                                        polarAngle(),
+                                        polarAngleRate(),
+                                        polarApertureScaleFactor(),
+                                        polarApertureScaleFactorRate(),
+                                        rangePixelSpacing(),
+                                        azimuthPixelSpacing(),
+                                        rangeCenterPixel() - xoff,
+                                        azimuthCenterPixel() - yoff,
+                                        lookSide(),
+                                        ysize,
+                                        xsize,
+                                        refEpoch());
+        }
 
     // Protected data members can be accessed by derived classes
     protected:
