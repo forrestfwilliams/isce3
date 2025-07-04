@@ -73,25 +73,25 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
         inline double polarAngle() const { return _polarAngle; }
 
         /** Get polar angle of scene center */
-        inline void polarAngle(const double & t) { _polarAngle = t; }
+        inline void polarAngle(const double & t) { _polarAngle = t; computePolarMatrixTerms(); }
 
         /** Get polar angle rate of scene center */
         inline double polarAngleRate() const { return _polarAngleRate; }
 
         /** Set polar angle rate of scene center */
-        inline void polarAngleRate(const double & t) { _polarAngleRate = t; }
+        inline void polarAngleRate(const double & t) { _polarAngleRate = t; computePolarMatrixTerms(); }
 
         /** Get polar aperture scale factor of scene center */
         inline double polarApertureScaleFactor() const { return _polarApertureScaleFactor; }
 
         /** Set polar aperture scale factor of scene center */
-        inline void polarApertureScaleFactor(const double & t) { _polarApertureScaleFactor = t; }
+        inline void polarApertureScaleFactor(const double & t) { _polarApertureScaleFactor = t; computePolarMatrixTerms(); }
 
         /** Get polar aperture scale factor rate of scene center */
         inline double polarApertureScaleFactorRate() const { return _polarApertureScaleFactorRate; }
 
         /** Set polar aperture scale factor of scene center */
-        inline void polarApertureScaleFactorRate(const double & t) { _polarApertureScaleFactorRate = t; }
+        inline void polarApertureScaleFactorRate(const double & t) { _polarApertureScaleFactorRate = t; computePolarMatrixTerms(); }
 
         /** Get slant range pixel spacing in meters*/
         inline double rangePixelSpacing() const { return _rangePixelSpacing; }
@@ -149,6 +149,18 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
         /** Get total number of radar grid elements */
         inline size_t size() const { return _rlength * _rwidth; }
 
+        /** Get row 1 col 1 element of polar matrix */
+        inline double a11() const { return _a11; }
+
+        /** Get row 1 col 2 element of polar matrix */
+        inline double a12() const { return _a12; }
+
+        /** Get row 2 col 1 element of polar matrix */
+        inline double a21() const { return _a21; }
+        
+        /** Get row 2 col 2 element of polar matrix */
+        inline double a22() const { return _a22; }
+        
         /** Crop/ Expand while keeping the spacing the same with top left offset and size */
         inline PolarGridParameters offsetAndResize(double yoff, double xoff, size_t ysize, size_t xsize) const
         {
@@ -170,6 +182,38 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
                                         refEpoch());
         }
 
+        /** Upsample */
+        inline PolarGridParameters
+        upsample(size_t az_upsampling_factor, size_t rg_upsampling_factor) const
+        {
+            // Check for number of points on edge
+            if ((az_upsampling_factor  == 0) || (rg_upsampling_factor  == 0)) {
+                std::string errstr = "Upsampling factor must be positive. " +
+                                     std::to_string(az_upsampling_factor ) + "Az x" +
+                                     std::to_string(rg_upsampling_factor ) +
+                                     "Rg upsampling requested.";
+                throw isce3::except::OutOfRange(ISCE_SRCINFO(), errstr);
+            }
+
+            // important: differently from multilook(), upsample does not
+            // update _sensingStart or _startingRange
+            return PolarGridParameters( sensingStart(),
+                                        wavelength(),
+                                        centerRange(),
+                                        centerRangeRate(),
+                                        polarAngle(),
+                                        polarAngleRate(),
+                                        polarApertureScaleFactor(),
+                                        polarApertureScaleFactorRate(),
+                                        rangePixelSpacing() / (1.0 * rg_upsampling_factor),
+                                        azimuthPixelSpacing() / (1.0 * az_upsampling_factor),
+                                        rangeCenterPixel() * rg_upsampling_factor,
+                                        azimuthCenterPixel() * az_upsampling_factor,
+                                        lookSide(),
+                                        length() * az_upsampling_factor,
+                                        width() * rg_upsampling_factor,
+                                        refEpoch());
+        }
     // Protected data members can be accessed by derived classes
     protected:
         /** Sensing start time */
@@ -220,6 +264,12 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
         /** Reference epoch for time tags */
         isce3::core::DateTime _refEpoch;
 
+        /** Factors for the polar angle range and range rate conversion matrix */
+        double _a11, _a12, _a21, _a22;
+
+        /** Compute the polar matrix terms based on polar angle and polar aperture scale factor */
+        inline void computePolarMatrixTerms();
+
         /** Validate parameters of data structure */
         inline void validate() const;
 };
@@ -251,7 +301,7 @@ PolarGridParameters(const PolarGridParameters & pgparams) :
     _lookSide(pgparams.lookSide()),
     _rlength(pgparams.length()),
     _rwidth(pgparams.width()),
-    _refEpoch(pgparams.refEpoch()) { validate(); }
+    _refEpoch(pgparams.refEpoch()) { computePolarMatrixTerms(); validate(); }
 
 // Assignment operator
 /** @param[in] pgparam PolarGridParameters object */
@@ -274,6 +324,7 @@ operator=(const isce3::product::PolarGridParameters & pgparams) {
     _rlength = pgparams.length();
     _rwidth = pgparams.width();
     _refEpoch = pgparams.refEpoch();
+    computePolarMatrixTerms();
     validate();
     return *this;
 }
@@ -311,7 +362,25 @@ PolarGridParameters(double sensingStart,
     _lookSide(lookSide),
     _rlength(length),
     _rwidth(width),
-    _refEpoch(refEpoch) { validate(); }
+    _refEpoch(refEpoch) { computePolarMatrixTerms(); validate(); }
+
+// Compute the polar matrix terms based on polar angle and polar aperture scale factor
+void
+isce3::product::PolarGridParameters::computePolarMatrixTerms()
+{
+    const double theta = _polarAngle;
+    const double ksf = _polarApertureScaleFactor;
+    const double dksf_dtheta = _polarApertureScaleFactorRate;
+    const double dtheta_dt = _polarAngleRate;
+
+    const double cos_polar = std::cos(theta);
+    const double sin_polar = std::sin(theta);
+
+    _a11 = ksf * cos_polar;
+    _a12 = ksf * sin_polar;
+    _a21 = (dksf_dtheta * cos_polar - ksf * sin_polar) * dtheta_dt;
+    _a22 = (dksf_dtheta * sin_polar + ksf * cos_polar) * dtheta_dt;
+}
 
 // Validation of radar grid parameters
 void
