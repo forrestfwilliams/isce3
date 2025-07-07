@@ -96,7 +96,7 @@ void Geocode<T>::geoGrid(double geoGridStartX, double geoGridStartY,
 
 static void _validateInputLayoverShadowMaskRaster(
         isce3::io::Raster* input_layover_shadow_mask_raster,
-        const isce3::product::RadarGridParameters& radar_grid){
+        const isce3::product::PolarGridParameters& radar_grid){
 
     pyre::journal::error_t error("isce3.geocode.GeocodeCov");
 
@@ -1493,6 +1493,34 @@ static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
     return flag_converged;
 }
 
+static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, isce3::core::EMatrix2D<double, 2, 2>& polarMatrixInv,
+        double& aztime, double& centerRange, double& rng_distance, double& azm_distance,
+        const isce3::core::LUT2d<double>& az_time_correction,
+        const isce3::core::LUT2d<double>& slant_range_correction)
+{
+    int flag_converged;
+    flag_converged = isce3::geometry::geo2rdr(inputLLH, ellipsoid, orbit,
+            polarMatrixInv, aztime, centerRange, rng_distance, azm_distance);
+
+    if (!flag_converged) {
+        return flag_converged;
+    }
+
+    // apply timing corrections
+    // TODO: likely not applicable for PFA
+    if (az_time_correction.contains(aztime, slantRange)) {
+        const auto aztimeCor = az_time_correction.eval(aztime, slantRange);
+        aztime += aztimeCor;
+    }
+
+    if (slant_range_correction.contains(aztime, slantRange)) {
+        const auto srangeCor = slant_range_correction.eval(aztime, slantRange);
+        slantRange += srangeCor;
+    }
+
+    return flag_converged;
+}
 
 /**
 * This function fills up a GCOV raster block with NaNs if the block is
@@ -1716,10 +1744,101 @@ bool Geocode<T>::_checkLoadEntireRslcCorners(const double y0, const double x0,
 }
 
 template<class T>
+bool Geocode<T>::_checkLoadEntireRslcCorners(const double y0, const double x0,
+        const double yf, const double xf,
+        const isce3::product::PolarGridParameters& radar_grid,
+        isce3::core::ProjectionBase* proj,
+        const std::function<Vec3(double, double,
+                const isce3::geometry::DEMInterpolator&,
+                isce3::core::ProjectionBase*)>& getDemCoords,
+        isce3::geometry::DEMInterpolator& dem_interp, int margin_pixels)
+{
+    /*
+     Check if a geogrid bounding box (y0, x0, yf, xf) fully
+     covers the RSLC (represented by the radar_grid).
+     */
+
+    const double dr = radar_grid.rangePixelSpacing();
+    const double rc = radar_grid.rangeCenterPixel();
+    const double da = radar_grid.azimuthPixelSpacing();
+    const double ac = radar_grid.azimuthCenterPixel();
+
+    double a_min = std::numeric_limits<double>::quiet_NaN();
+    double r_min = std::numeric_limits<double>::quiet_NaN();
+    double a_max = std::numeric_limits<double>::quiet_NaN();
+    double r_max = std::numeric_limits<double>::quiet_NaN();
+
+    std::vector<std::pair<float, float>> vertices_positions = {
+            std::make_pair(y0, x0), std::make_pair(y0, xf),
+            std::make_pair(yf, x0), std::make_pair(yf, xf)};
+
+    for (auto [dem_y, dem_x] : vertices_positions) {
+
+        double range_distance{};
+        double azimuth_distance{};
+
+        // Convert DEM coordinates (`dem_x` and `dem_y`) from _epsgOut to DEM
+        // EPSG coordinates x and y, interpolate height (z), and return:
+        // dem_pos_vect = {x, y, z}
+        Vec3 dem_pos_vect = getDemCoords(dem_x, dem_y, dem_interp, proj);
+
+        const int converged = isce3::geometry::geo2rdr(
+                dem_interp.proj()->inverse(dem_pos_vect), _ellipsoid, _orbit,
+                radar_grid.polarMatrixInv(), radar_grid.sensingStart(),
+                radar_grid.centerRange(), range_distance, azimuth_distance);
+
+        // if it didn't converge, return false
+        if (!converged) {
+            return false;
+        }
+
+        // Convert range and azimuth distance to pixel indexes
+        double idx_r = (range_distance / dr) + rc;
+        double idx_a = (azimuth_distance / da) + ac;
+
+        /*
+        If there is at least one point inside the radar grid,
+        do not load entire RSLC
+        */
+        if (idx_a > margin_pixels &&
+                idx_a < radar_grid.length() - 1 - margin_pixels &&
+                idx_r > margin_pixels &&
+                idx_r < radar_grid.width() - 1 - margin_pixels) {
+            return false;
+        }
+
+        if (std::isnan(a_min) || idx_a < a_min)
+            a_min = idx_a;
+        if (std::isnan(a_max) || idx_a > a_max)
+            a_max = idx_a;
+        if (std::isnan(r_min) || idx_r < r_min)
+            r_min = idx_r;
+        if (std::isnan(r_max) || idx_r > r_max)
+            r_max = idx_r;
+    }
+
+    /*
+    If no point is inside the RSLC radar grid, we still need to test
+    if the bounding box covers the RSLC completely.
+
+    Notice that all points could be located at one side (e.g. East)
+    of the radar grid and the previous check would fail to detect
+    that the area of interest has no intersection with the RSLC.
+    */
+
+    const bool flag_load_entire_rslc =
+            (a_min <= margin_pixels && r_min <= margin_pixels &&
+                    a_max >= radar_grid.length() - 1 - margin_pixels &&
+                    r_max >= radar_grid.width() - 1 - margin_pixels);
+
+    return flag_load_entire_rslc;
+}
+
+template<class T>
 void Geocode<T>::_getRadarPositionBorder(double geogrid_upsampling,
         const double y0, const double x0, const double yf, const double xf,
         double* a_min, double* r_min, double* a_max, double* r_max,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const isce3::product::PolarGridParameters& radar_grid,
         isce3::core::ProjectionBase* proj,
         const std::function<Vec3(double, double,
                 const isce3::geometry::DEMInterpolator&,
@@ -1735,19 +1854,16 @@ void Geocode<T>::_getRadarPositionBorder(double geogrid_upsampling,
     const int imax = _geoGridLength * geogrid_upsampling;
     const int jmax = _geoGridWidth * geogrid_upsampling;
 
-    double az_time = radar_grid.sensingMid();
-    double range_distance = radar_grid.midRange();
-
     bool flag_direction_line = true, flag_save_vectors = false;
     bool flag_compute_min_max = true;
 
-    _getRadarPositionVect(y0, 0, jmax, geogrid_upsampling, &az_time,
-            &range_distance, a_min, r_min, a_max, r_max, radar_grid, proj,
+    _getRadarPositionVect(y0, 0, jmax, geogrid_upsampling,
+            a_min, r_min, a_max, r_max, radar_grid, proj,
             dem_interp, getDemCoords, flag_direction_line, flag_save_vectors,
             flag_compute_min_max, az_time_correction, slant_range_correction);
 
-    _getRadarPositionVect(yf, 0, jmax, geogrid_upsampling, &az_time,
-            &range_distance, a_min, r_min, a_max, r_max, radar_grid, proj,
+    _getRadarPositionVect(yf, 0, jmax, geogrid_upsampling,
+            a_min, r_min, a_max, r_max, radar_grid, proj,
             dem_interp, getDemCoords, flag_direction_line, flag_save_vectors,
             flag_compute_min_max, az_time_correction, slant_range_correction);
 
@@ -1757,13 +1873,13 @@ void Geocode<T>::_getRadarPositionBorder(double geogrid_upsampling,
     int i_start = 1;
     int i_end = imax - 1;
 
-    _getRadarPositionVect(x0, i_start, i_end, geogrid_upsampling, &az_time,
-            &range_distance, a_min, r_min, a_max, r_max, radar_grid, proj,
+    _getRadarPositionVect(x0, i_start, i_end, geogrid_upsampling,
+            a_min, r_min, a_max, r_max, radar_grid, proj,
             dem_interp, getDemCoords, flag_direction_line, flag_save_vectors,
             flag_compute_min_max, az_time_correction, slant_range_correction);
 
-    _getRadarPositionVect(xf, i_start, i_end, geogrid_upsampling, &az_time,
-            &range_distance, a_min, r_min, a_max, r_max, radar_grid, proj,
+    _getRadarPositionVect(xf, i_start, i_end, geogrid_upsampling,
+            a_min, r_min, a_max, r_max, radar_grid, proj,
             dem_interp, getDemCoords, flag_direction_line, flag_save_vectors,
             flag_compute_min_max, az_time_correction, slant_range_correction);
 }
@@ -2385,9 +2501,9 @@ void Geocode<T>::geocodeAreaProj(
 
 template<class T>
 void Geocode<T>::_getRadarPositionVect(double dem_pos_1, const int k_start,
-        const int k_end, double geogrid_upsampling, double* az_time,
-        double* range_distance, double* y_min, double* x_min, double* y_max,
-        double* x_max, const isce3::product::RadarGridParameters& radar_grid,
+        const int k_end, double geogrid_upsampling,
+        double* y_min, double* x_min, double* y_max,
+        double* x_max, const isce3::product::PolarGridParameters& radar_grid,
         isce3::core::ProjectionBase* proj,
         isce3::geometry::DEMInterpolator& dem_interp_block,
         const std::function<Vec3(double, double,
@@ -2406,14 +2522,13 @@ void Geocode<T>::_getRadarPositionVect(double dem_pos_1, const int k_start,
     az. and rg. positions
     */
 
-    double pixazm = 0.0, start = 0.0, dr = 0.0, r0 = 0.0;
+    double azm_center = 0.0, rng_center = 0.0, dr = 0.0, r0 = 0.0;
 
     if (flag_compute_min_max) {
-        // start (az) and r0 at the outer edge of the first pixel
-        pixazm = radar_grid.azimuthTimeInterval();
-        start = radar_grid.sensingStart() - 0.5 * pixazm;
         dr = radar_grid.rangePixelSpacing();
-        r0 = radar_grid.startingRange() - 0.5 * dr;
+        rng_center = radar_grid.rangeCenterPixel();
+        da = radar_grid.azimuthPixelSpacing();
+        azm_center = radar_grid.azimuthCenterPixel();
     }
 
     for (int kk = k_start; kk <= k_end; ++kk) {
@@ -2438,24 +2553,18 @@ void Geocode<T>::_getRadarPositionVect(double dem_pos_1, const int k_start,
         }
 
         // coarse geo2rdr
+        double azm_distance = 0.0
+        double rng_distance = 0.0
         int converged =
                 _geo2rdrWrapper(dem_interp_block.proj()->inverse(dem_pos_vect),
-                        _ellipsoid, _orbit, _doppler, *az_time, *range_distance,
-                        radar_grid.wavelength(), radar_grid.lookSide(),
-                        az_time_correction, slant_range_correction,
-                        _threshold, _numiter, 1.0e-8, true);
-
-        // if it didn't converge, reset initial solution and continue
-        if (!converged) {
-            *az_time = radar_grid.sensingMid();
-            *range_distance = radar_grid.midRange();
-            continue;
-        }
+                        _ellipsoid, _orbit, radar_grid.polarMatrixInv(),
+                        radar_grid.sensingStart(), radar_grid.centerRange(),
+                        *azm_distance, *range_distance)
 
         // otherwise, save solution
         if (flag_save_vectors) {
-            a_vect->operator[](k) = *az_time;
-            r_vect->operator[](k) = *range_distance;
+            a_vect->operator[](k) = *azm_distance;
+            r_vect->operator[](k) = *rng_distance;
             dem_vect->operator[](k) = dem_pos_vect;
         }
 
@@ -2463,8 +2572,8 @@ void Geocode<T>::_getRadarPositionVect(double dem_pos_1, const int k_start,
             continue;
 
         // compute min/max pixel indexes
-        double y = (*az_time - start) / pixazm;
-        double x = (*range_distance - r0) / dr;
+        double y = (*azm_distance / da) + azm_center;
+        double x = (*rng_distance / dr) + rng_center;
 
         // update min and max rg. and az. indexes
         if (std::isnan(*y_min) || y < *y_min)
@@ -2477,10 +2586,11 @@ void Geocode<T>::_getRadarPositionVect(double dem_pos_1, const int k_start,
             *x_max = x;
     }
 }
+
 template<class T>
 template<class T2, class T_out>
 void Geocode<T>::_runBlock(
-        const isce3::product::RadarGridParameters& radar_grid,
+        const isce3::product::PolarGridParameters& radar_grid,
         bool is_radar_grid_single_block,
         std::vector<std::unique_ptr<isce3::core::Matrix<T2>>>& rdrData,
         int block_size_y, int block_size_with_upsampling_y, int block_y,
