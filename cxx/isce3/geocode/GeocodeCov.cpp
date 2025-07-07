@@ -30,9 +30,9 @@ using isce3::core::GeocodeMemoryMode;
 
 namespace isce3 { namespace geocode {
 
-template<class T>
-void Geocode<T>::updateGeoGrid(
-        const isce3::product::RadarGridParameters& radar_grid,
+template<class T, class T_grid>
+void Geocode<T, T_grid>::updateGeoGrid(
+        const T_grid& radar_grid,
         isce3::io::Raster& dem_raster)
 {
 
@@ -65,8 +65,8 @@ void Geocode<T>::updateGeoGrid(
     }
 }
 
-template<class T>
-void Geocode<T>::geoGrid(double geoGridStartX, double geoGridStartY,
+template<class T, class T_grid>
+void Geocode<T, T_grid>::geoGrid(double geoGridStartX, double geoGridStartY,
                          double geoGridSpacingX, double geoGridSpacingY,
                          int width, int length, int epsgcode)
 {
@@ -96,35 +96,35 @@ void Geocode<T>::geoGrid(double geoGridStartX, double geoGridStartY,
 
 static void _validateInputLayoverShadowMaskRaster(
         isce3::io::Raster* input_layover_shadow_mask_raster,
-        const isce3::product::RadarGridParameters& radar_grid){
+        const size_t length, const size_t width){
 
     pyre::journal::error_t error("isce3.geocode.GeocodeCov");
 
-    if (input_layover_shadow_mask_raster->width() != radar_grid.width()) {
+    if (input_layover_shadow_mask_raster->width() != width) {
         std::string err_str {
             "ERROR the widths of the input layover/shadow mask (" +
             std::to_string(input_layover_shadow_mask_raster->width()) +
             ") and radar geometry (" +
-            std::to_string(radar_grid.width()) +
+            std::to_string(width) +
             ") do not match"};
         error << err_str << pyre::journal::endl;
         throw isce3::except::InvalidArgument(ISCE_SRCINFO(), err_str);
     }
 
-    if (input_layover_shadow_mask_raster->length() != radar_grid.length()) {
+    if (input_layover_shadow_mask_raster->length() != length) {
         std::string err_str {
             "ERROR the lengths of the input layover/shadow mask (" +
             std::to_string(input_layover_shadow_mask_raster->length()) +
             ") and radar geometry (" +
-            std::to_string(radar_grid.length()) +
+            std::to_string(length) +
             ") do not match"};
         error << err_str << pyre::journal::endl;
         throw isce3::except::InvalidArgument(ISCE_SRCINFO(), err_str);
     }
 }
 
-template<class T>
-void Geocode<T>::geocode(const isce3::product::RadarGridParameters& radar_grid,
+template<class T, class T_grid>
+void Geocode<T, T_grid>::geocode(const T_grid& radar_grid,
         isce3::io::Raster& input_raster, isce3::io::Raster& output_raster,
         isce3::io::Raster& dem_raster, geocodeOutputMode output_mode,
         bool flag_az_baseband_doppler, bool flatten, double geogrid_upsampling,
@@ -248,10 +248,10 @@ void Geocode<T>::geocode(const isce3::product::RadarGridParameters& radar_grid,
                 dem_interp_method);
 }
 
-template<class T>
+template<class T, class T_grid>
 template<class T_out>
-void Geocode<T>::geocodeInterp(
-        const isce3::product::RadarGridParameters& radar_grid,
+void Geocode<T, T_grid>::geocodeInterp(
+        const T_grid& radar_grid,
         isce3::io::Raster& inputRaster, isce3::io::Raster& outputRaster,
         isce3::io::Raster& demRaster, bool flag_apply_rtc,
         bool flag_az_baseband_doppler, bool flatten,
@@ -356,7 +356,7 @@ void Geocode<T>::geocodeInterp(
         info << "input layover/shadow mask provided: True" <<
             pyre::journal::newline;
         _validateInputLayoverShadowMaskRaster(
-            input_layover_shadow_mask_raster, radar_grid);
+            input_layover_shadow_mask_raster, radar_grid.length(), radar_grid.width());
 
         input_layover_shadow_mask.resize(
                 radar_grid.length(), radar_grid.width());
@@ -933,9 +933,9 @@ void Geocode<T>::geocodeInterp(
     info << "elapsed time (GEO-IN) [s]: " << elapsed_time << pyre::journal::endl;
 }
 
-template<class T>
+template<class T, class T_grid>
 template<class T_out>
-inline void Geocode<T>::_interpolate(
+inline void Geocode<T, T_grid>::_interpolate(
         const isce3::core::Matrix<T_out>& rdrDataBlock,
         isce3::core::Matrix<T_out>& geoDataBlock,
         const std::valarray<double>& radarX,
@@ -943,7 +943,7 @@ inline void Geocode<T>::_interpolate(
         const int radarBlockLength, const int azimuthFirstLine,
         const int rangeFirstPixel,
         const isce3::core::Interpolator<T_out>* interp,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const T_grid& radar_grid,
         const bool flag_az_baseband_doppler, const bool flatten,
         isce3::io::Raster* phase_screen_raster,
         isce3::core::Matrix<float>& phase_screen_array,
@@ -1177,9 +1177,9 @@ This is only useful applicable for complex images. For real images,
 the function does nothing. The "dummy function" bellow overloads
  _baseband() for real images.
 */
-template<class T>
+template<class T, class T_grid>
 template<class T2>
-void Geocode<T>::_baseband(isce3::core::Matrix<T2>& data,
+void Geocode<T, T_grid>::_baseband(isce3::core::Matrix<T2>& data,
         const double starting_range, const double sensing_start,
         const double range_pixel_spacing, const double prf,
         const isce3::core::LUT2d<double>& doppler_lut)
@@ -1193,9 +1193,9 @@ void Geocode<T>::_baseband(isce3::core::Matrix<T2>& data,
     (void) doppler_lut;
 }
 
-template<class T>
+template<class T, class T_grid>
 template<class T2>
-void Geocode<T>::_baseband(isce3::core::Matrix<std::complex<T2>>& data,
+void Geocode<T, T_grid>::_baseband(isce3::core::Matrix<std::complex<T2>>& data,
         const double starting_range, const double sensing_start,
         const double range_pixel_spacing, const double prf,
         const isce3::core::LUT2d<double>& doppler_lut)
@@ -1217,8 +1217,8 @@ void Geocode<T>::_baseband(isce3::core::Matrix<std::complex<T2>>& data,
     }
 }
 
-template<class T>
-int Geocode<T>::_geo2rdr(const isce3::product::RadarGridParameters& radar_grid,
+template<class T, class T_grid>
+int Geocode<T, T_grid>::_geo2rdr(const T_grid& radar_grid,
         double x, double y, double& azimuthTime, double& slantRange,
         isce3::geometry::DEMInterpolator& demInterp,
         isce3::core::ProjectionBase* proj, float& dem_value)
@@ -1625,10 +1625,10 @@ inline void _saveOptionalFiles(int block_x, int block_size_x, int block_y,
     }
 }
 
-template<class T>
-bool Geocode<T>::_checkLoadEntireRslcCorners(const double y0, const double x0,
+template<class T, class T_grid>
+bool Geocode<T, T_grid>::_checkLoadEntireRslcCorners(const double y0, const double x0,
         const double yf, const double xf,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const T_grid& radar_grid,
         isce3::core::ProjectionBase* proj,
         const std::function<Vec3(double, double,
                 const isce3::geometry::DEMInterpolator&,
@@ -1715,11 +1715,11 @@ bool Geocode<T>::_checkLoadEntireRslcCorners(const double y0, const double x0,
     return flag_load_entire_rslc;
 }
 
-template<class T>
-void Geocode<T>::_getRadarPositionBorder(double geogrid_upsampling,
+template<class T, class T_grid>
+void Geocode<T, T_grid>::_getRadarPositionBorder(double geogrid_upsampling,
         const double y0, const double x0, const double yf, const double xf,
         double* a_min, double* r_min, double* a_max, double* r_max,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const T_grid& radar_grid,
         isce3::core::ProjectionBase* proj,
         const std::function<Vec3(double, double,
                 const isce3::geometry::DEMInterpolator&,
@@ -1768,9 +1768,9 @@ void Geocode<T>::_getRadarPositionBorder(double geogrid_upsampling,
             flag_compute_min_max, az_time_correction, slant_range_correction);
 }
 
-template<class T>
-void Geocode<T>::_getRadarGridBoundaries(
-        const isce3::product::RadarGridParameters& radar_grid,
+template<class T, class T_grid>
+void Geocode<T, T_grid>::_getRadarGridBoundaries(
+        const T_grid& radar_grid,
         isce3::io::Raster& input_raster, isce3::io::Raster& dem_raster,
         isce3::core::ProjectionBase* proj, double geogrid_upsampling,
         bool flag_upsample_radar_grid,
@@ -1860,10 +1860,10 @@ void Geocode<T>::_getRadarGridBoundaries(
     *grid_size_x = xbound - *offset_x + 1;
 }
 
-template<class T>
+template<class T, class T_grid>
 template<class T_out>
-void Geocode<T>::geocodeAreaProj(
-        const isce3::product::RadarGridParameters& radar_grid,
+void Geocode<T, T_grid>::geocodeAreaProj(
+        const T_grid& radar_grid,
         isce3::io::Raster& input_raster, isce3::io::Raster& output_raster,
         isce3::io::Raster& dem_raster, double geogrid_upsampling,
         bool flag_upsample_radar_grid, bool flag_apply_rtc,
@@ -1905,8 +1905,7 @@ void Geocode<T>::geocodeAreaProj(
 
     if (flag_upsample_radar_grid &&
         std::round(((float) radar_grid.width()) / input_raster.width()) == 1) {
-        isce3::product::RadarGridParameters upsampled_radar_grid =
-                radar_grid.upsample(1, 2);
+        T_grid upsampled_radar_grid = radar_grid.upsample(1, 2);
         const float upsampled_radar_grid_nlooks = radar_grid_nlooks / 2;
         geocodeAreaProj<T_out>(upsampled_radar_grid, input_raster,
                 output_raster, dem_raster, geogrid_upsampling,
@@ -2001,8 +2000,7 @@ void Geocode<T>::geocodeAreaProj(
             geogrid_upsampling, flag_upsample_radar_grid, dem_interp_method,
             &offset_y, &offset_x, &grid_size_y, &grid_size_x);
 
-    isce3::product::RadarGridParameters radar_grid_cropped =
-            radar_grid.offsetAndResize(
+    T_grid radar_grid_cropped = radar_grid.offsetAndResize(
                     offset_y, offset_x, grid_size_y, grid_size_x);
 
     bool is_radar_grid_single_block =
@@ -2131,7 +2129,7 @@ void Geocode<T>::geocodeAreaProj(
             pyre::journal::newline;
 
         _validateInputLayoverShadowMaskRaster(
-            input_layover_shadow_mask_raster, radar_grid);
+            input_layover_shadow_mask_raster, radar_grid.length(), radar_grid.width());
 
         /*
         if we are in radar-grid single block mode, read entire layover/shadow
@@ -2383,11 +2381,11 @@ void Geocode<T>::geocodeAreaProj(
     info << "elapsed time (GEO-AP) [s]: " << elapsed_time << pyre::journal::endl;
 }
 
-template<class T>
-void Geocode<T>::_getRadarPositionVect(double dem_pos_1, const int k_start,
+template<class T, class T_grid>
+void Geocode<T, T_grid>::_getRadarPositionVect(double dem_pos_1, const int k_start,
         const int k_end, double geogrid_upsampling, double* az_time,
         double* range_distance, double* y_min, double* x_min, double* y_max,
-        double* x_max, const isce3::product::RadarGridParameters& radar_grid,
+        double* x_max, const T_grid& radar_grid,
         isce3::core::ProjectionBase* proj,
         isce3::geometry::DEMInterpolator& dem_interp_block,
         const std::function<Vec3(double, double,
@@ -2477,10 +2475,10 @@ void Geocode<T>::_getRadarPositionVect(double dem_pos_1, const int k_start,
             *x_max = x;
     }
 }
-template<class T>
+template<class T, class T_grid>
 template<class T2, class T_out>
-void Geocode<T>::_runBlock(
-        const isce3::product::RadarGridParameters& radar_grid,
+void Geocode<T, T_grid>::_runBlock(
+        const T_grid& radar_grid,
         bool is_radar_grid_single_block,
         std::vector<std::unique_ptr<isce3::core::Matrix<T2>>>& rdrData,
         int block_size_y, int block_size_with_upsampling_y, int block_y,
@@ -2843,7 +2841,7 @@ void Geocode<T>::_runBlock(
             return;
         }
 
-        isce3::product::RadarGridParameters radar_grid_block =
+        T_grid radar_grid_block =
                 radar_grid.offsetAndResize(offset_y, offset_x, grid_size_y,
                                            grid_size_x);
 
@@ -3610,8 +3608,8 @@ std::string _get_geocode_memory_mode_str(
     return geocode_memory_mode_str;
 }
 
-template<class T>
-void Geocode<T>::_print_parameters(pyre::journal::info_t& channel, 
+template<class T, class T_grid>
+void Geocode<T, T_grid>::_print_parameters(pyre::journal::info_t& channel, 
                                   isce3::core::GeocodeMemoryMode& geocode_memory_mode,
                                   const long long min_block_size,
                                   const long long max_block_size) {

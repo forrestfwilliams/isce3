@@ -14,10 +14,10 @@ using isce3::core::DateTime;
 using isce3::core::LookSide;
 
 void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
-{
+    {
     pyPolarGridParameters
-        .def(py::init<double, double, double, double, double, double, double, double, double, double,
-             size_t, size_t, LookSide, size_t, size_t, DateTime>(),
+        .def(py::init<double, double, double, double, double, double,
+            double, double, double, double, size_t, size_t, LookSide, size_t, size_t, DateTime>(),
                 py::arg("sensing_start"),
                 py::arg("wavelength"),
                 py::arg("center_range"),
