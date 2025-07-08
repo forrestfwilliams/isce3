@@ -821,8 +821,8 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
     _Pragma("omp parallel for schedule(dynamic)")
         for (size_t ii = 0; ii < imax; ++ii)
     {
-        double a = radar_grid.sensingMid();
-        double r = radar_grid.midRange();
+        double a = radar_grid.azimuthMid();
+        double r = radar_grid.slantRangeMid();
 
         // The inner loop is not parallelized in order to keep the previous
         // solution from geo2rdr as the initial guess for the next call to
@@ -979,7 +979,7 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
                 const double ground_velocity =
                         cos_alpha * radius_target * vel.norm() / radius_platform;
                 const double area_beta = radar_grid.rangePixelSpacing() *
-                                         ground_velocity / radar_grid.prf();
+                                         ground_velocity * radar_grid.azimuthPixelSpacing();
                 area /= area_beta;
                 if (flag_compute_area_sigma_separately) {
                     area_sigma /= area_beta;
