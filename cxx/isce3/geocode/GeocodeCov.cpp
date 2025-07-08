@@ -1711,10 +1711,6 @@ bool Geocode<T, T_grid>::_checkLoadEntireRslcCorners(const double y0, const doub
         // dem_pos_vect = {x, y, z}
         Vec3 dem_pos_vect = getDemCoords(dem_x, dem_y, dem_interp, proj);
 
-        // const int converged = isce3::geometry::geo2rdr(
-        //         dem_interp.proj()->inverse(dem_pos_vect), _ellipsoid, _orbit,
-        //         _doppler, az_value, range_value, radar_grid.wavelength(),
-        //         radar_grid.lookSide(), _threshold, _numiter, 1.0e-8);
         const int converged = _geo2rdrGrid(
                 dem_interp.proj()->inverse(dem_pos_vect), _ellipsoid, _orbit, _doppler,
                 az_value, range_value, radar_grid, _threshold, _numiter, 1.0e-8); 
