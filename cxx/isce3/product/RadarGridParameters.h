@@ -81,6 +81,9 @@ class isce3::product::RadarGridParameters: public RngAzmGridParameters {
         /** Set sensing start time in seconds since reference epoch */
         inline void sensingStart(const double & t){ _sensingStart = t; }
 
+        /** Generic sensing start time in seconds since reference epoch */
+        inline double startingAzimuth() const { return _sensingStart; }
+
         /** Get radar wavelength in meters*/
         inline double wavelength() const { return _wavelength; }
 

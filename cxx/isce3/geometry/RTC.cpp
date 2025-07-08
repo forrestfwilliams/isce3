@@ -760,10 +760,8 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
             std::min(geogrid.startY(), yf) - margin_y,
             std::max(geogrid.startY(), yf) + margin_y);
 
-    const double start = radar_grid.sensingStart();
-    const double pixazm =
-            radar_grid.azimuthTimeInterval(); // azimuth difference per pixel
-
+    const double start = radar_grid.startingAzimuth();
+    const double pixazm = radar_grid.azimuthPixelSpacing();
     const double r0 = radar_grid.startingRange();
     const double dr = radar_grid.rangePixelSpacing();
 
@@ -1327,15 +1325,15 @@ void _RunBlock(const int jmax, const int block_size,
                 continue;
             }
 
-            double y00 = radar_grid.azimuthIndexPoint(a00);
-            double y10 = radar_grid.azimuthIndexPoint(a10);
-            double y01 = radar_grid.azimuthIndexPoint(a01);
-            double y11 = radar_grid.azimuthIndexPoint(a11);
+            double y00 = (a00 - start) / pixazm;
+            double y10 = (a10 - start) / pixazm;
+            double y01 = (a01 - start) / pixazm;
+            double y11 = (a11 - start) / pixazm;
 
-            double x00 = radar_grid.slantRangeIndexPoint(r00);
-            double x10 = radar_grid.slantRangeIndexPoint(r10);
-            double x01 = radar_grid.slantRangeIndexPoint(r01);
-            double x11 = radar_grid.slantRangeIndexPoint(r11);
+            double x00 = (r00 - r0) / dr;
+            double x10 = (r10 - r0) / dr;
+            double x01 = (r01 - r0) / dr;
+            double x11 = (r11 - r0) / dr;
 
             // define slant-range window
             int margin = AREA_PROJECTION_RADAR_GRID_MARGIN;
@@ -1655,8 +1653,8 @@ void computeRtcAreaProj(isce3::io::Raster& dem_raster,
          << pyre::journal::newline;
 
     // start (az) and r0 at the outer edge of the first pixel:
-    const double pixazm = radar_grid.azimuthTimeInterval();
-    double start = radar_grid.sensingStart() - 0.5 * pixazm;
+    const double pixazm = radar_grid.azimuthPixelSpacing();
+    double start = radar_grid.startingAzimuth() - 0.5 * pixazm;
     const double dr = radar_grid.rangePixelSpacing();
     double r0 = radar_grid.startingRange() - 0.5 * dr;
 
