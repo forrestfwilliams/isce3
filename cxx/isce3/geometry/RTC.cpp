@@ -1181,8 +1181,8 @@ void _RunBlock(const int jmax, const int block_size,
     are saved as "last" line elements such as a_last, r_last, and dem_last.
     */
 
-    double a11 = radar_grid.sensingMid();
-    double r11 = radar_grid.midRange();
+    double a11 = radar_grid.azimuthMid();
+    double r11 = radar_grid.slantRangeMid();
     Vec3 dem11;
 
     std::vector<double> a_last(
@@ -1211,8 +1211,8 @@ void _RunBlock(const int jmax, const int block_size,
                 az_time_correction, slant_range_correction,
                 threshold, num_iter, delta_range);
         if (!converged) {
-            a11 = radar_grid.sensingMid();
-            r11 = radar_grid.midRange();
+            a11 = radar_grid.azimuthMid();
+            r11 = radar_grid.slantRangeMid();
             continue;
         }
         /*
@@ -1327,15 +1327,15 @@ void _RunBlock(const int jmax, const int block_size,
                 continue;
             }
 
-            double y00 = (a00 - start) / pixazm;
-            double y10 = (a10 - start) / pixazm;
-            double y01 = (a01 - start) / pixazm;
-            double y11 = (a11 - start) / pixazm;
+            double y00 = radar_grid.azimuthIndex(y00);
+            double y10 = radar_grid.azimuthIndex(y10);
+            double y01 = radar_grid.azimuthIndex(y01);
+            double y11 = radar_grid.azimuthIndex(y11);
 
-            double x00 = (r00 - r0) / dr;
-            double x10 = (r10 - r0) / dr;
-            double x01 = (r01 - r0) / dr;
-            double x11 = (r11 - r0) / dr;
+            double x00 = radar_grid.slantRangeIndex(r00);
+            double x10 = radar_grid.slantRangeIndex(r10);
+            double x01 = radar_grid.slantRangeIndex(r01);
+            double x11 = radar_grid.slantRangeIndex(r11);
 
             // define slant-range window
             int margin = AREA_PROJECTION_RADAR_GRID_MARGIN;
@@ -1458,7 +1458,7 @@ void _RunBlock(const int jmax, const int block_size,
                 const double ground_velocity =
                         cos_alpha * radius_target * vel.norm() / radius_platform;
                 divisor = (radar_grid.rangePixelSpacing() * ground_velocity *
-                           radar_grid.azimuthTimeInterval());
+                           radar_grid.azimuthPixelSpacing());
             }
 
             if (input_terrain_radiometry ==
