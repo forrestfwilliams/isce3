@@ -959,10 +959,8 @@ inline void Geocode<T, T_grid>::_interpolate(
     size_t length = geoDataBlock.length();
     size_t width = geoDataBlock.width();
 
-    double offsetY =
-            azimuthFirstLine / radar_grid.prf() + radar_grid.sensingStart();
-    double offsetX = rangeFirstPixel * radar_grid.rangePixelSpacing() +
-                     radar_grid.startingRange();
+    double offsetY = radar_grid.azimuth(azimuthFirstLine);
+    double offsetX = radar_grid.slantRange(rangeFirstPixel);
 
 #pragma omp parallel for
     for (size_t kk = 0; kk < length * width; ++kk) {
@@ -1131,8 +1129,8 @@ inline void Geocode<T, T_grid>::_interpolate(
             continue;
         }
 
-        double aztime = rdrY / radar_grid.prf() + offsetY;
-        double srange = rdrX * radar_grid.rangePixelSpacing() + offsetX;
+        double aztime = radar_grid.azimuth(rdrY);
+        double srange = radar_grid.slantRange(rdrX);
 
         // doppler to be added back after interpolation
         double phase = 0;
