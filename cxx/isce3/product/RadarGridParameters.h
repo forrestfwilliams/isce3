@@ -156,7 +156,7 @@ class isce3::product::RadarGridParameters: public RngAzmGridParameters {
         /** Get azimuth fractional index (line) at a given sensing time 
          * assuming you start from the outer edge */
         inline double azimuthIndexPoint(double az_time) const {
-            return (az_time  -  (_sensingStart + (0.5/_prf))) * _prf;
+            return (az_time  -  (_sensingStart - (0.5/_prf))) * _prf;
         }
 
         /** Get a sensing DateTime for a given line (zero-index row) */
@@ -192,7 +192,7 @@ class isce3::product::RadarGridParameters: public RngAzmGridParameters {
         /** Get slant range fractional index at a given slant range distance 
          * assuming you start from the outer edge */
         inline double slantRangeIndexPoint(double slant_range) const {
-            return (slant_range  -  (_startingRange + (0.5 * _rangePixelSpacing))) / _rangePixelSpacing;
+            return (slant_range  -  (_startingRange - (0.5 * _rangePixelSpacing))) / _rangePixelSpacing;
         }
 
         /** Crop/ Expand while keeping the spacing the same with top left offset and size */

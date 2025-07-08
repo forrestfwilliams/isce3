@@ -1327,15 +1327,15 @@ void _RunBlock(const int jmax, const int block_size,
                 continue;
             }
 
-            double y00 = radar_grid.azimuthIndex(a00);
-            double y10 = radar_grid.azimuthIndex(a10);
-            double y01 = radar_grid.azimuthIndex(a01);
-            double y11 = radar_grid.azimuthIndex(a11);
+            double y00 = radar_grid.azimuthIndexPoint(a00);
+            double y10 = radar_grid.azimuthIndexPoint(a10);
+            double y01 = radar_grid.azimuthIndexPoint(a01);
+            double y11 = radar_grid.azimuthIndexPoint(a11);
 
-            double x00 = radar_grid.slantRangeIndex(r00);
-            double x10 = radar_grid.slantRangeIndex(r10);
-            double x01 = radar_grid.slantRangeIndex(r01);
-            double x11 = radar_grid.slantRangeIndex(r11);
+            double x00 = radar_grid.slantRangeIndexPoint(r00);
+            double x10 = radar_grid.slantRangeIndexPoint(r10);
+            double x01 = radar_grid.slantRangeIndexPoint(r01);
+            double x11 = radar_grid.slantRangeIndexPoint(r11);
 
             // define slant-range window
             int margin = AREA_PROJECTION_RADAR_GRID_MARGIN;
