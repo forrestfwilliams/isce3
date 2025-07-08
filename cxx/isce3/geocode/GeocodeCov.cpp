@@ -1454,45 +1454,6 @@ void _getUpsampledBlock(
     }
 }
 
-static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
-        const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
-        double& slantRange, double wavelength, LookSide side,
-        const isce3::core::LUT2d<double>& az_time_correction,
-        const isce3::core::LUT2d<double>& slant_range_correction,
-        double threshold, int maxIter, double deltaRange,
-        bool flag_edge = true)
-{
-    int flag_converged;
-    for (int i = 0; i <= static_cast<int>(flag_edge); ++i) {
-        /*
-          Run geo2rdr twice for border edge pixels. This is
-          required because initial guesses (a11 and r11)
-          are not as good for edge elements. Without it,
-          the edge solutions are slightly different than the
-          corresponding solutions from single-block processing.
-       */
-        flag_converged = isce3::geometry::geo2rdr(inputLLH, ellipsoid, orbit,
-                doppler, aztime, slantRange, wavelength, side, threshold,
-                maxIter, deltaRange);
-
-        if (!flag_converged) {
-            return flag_converged;
-        }
-    }
-    // apply timing corrections
-    if (az_time_correction.contains(aztime, slantRange)) {
-        const auto aztimeCor = az_time_correction.eval(aztime, slantRange);
-        aztime += aztimeCor;
-    }
-
-    if (slant_range_correction.contains(aztime, slantRange)) {
-        const auto srangeCor = slant_range_correction.eval(aztime, slantRange);
-        slantRange += srangeCor;
-    }
-
-    return flag_converged;
-}
-
 static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
         double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
@@ -1519,7 +1480,8 @@ static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
     return flag_converged;
 }
 
-static int _geo2rdrWrapper2(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+// TODO: make a template function
+static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
         double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
         const isce3::core::LUT2d<double>& az_time_correction,
@@ -1782,8 +1744,8 @@ void Geocode<T, T_grid>::_getRadarPositionBorder(double geogrid_upsampling,
     const int imax = _geoGridLength * geogrid_upsampling;
     const int jmax = _geoGridWidth * geogrid_upsampling;
 
-    double az_time = radar_grid.sensingMid();
-    double range_distance = radar_grid.midRange();
+    double az_time = radar_grid.azimuthMid();
+    double range_distance = radar_grid.slantRangeMid();
 
     bool flag_direction_line = true, flag_save_vectors = false;
     bool flag_compute_min_max = true;
@@ -2451,16 +2413,6 @@ void Geocode<T, T_grid>::_getRadarPositionVect(double dem_pos_1, const int k_sta
     az. and rg. positions
     */
 
-    double pixazm = 0.0, start = 0.0, dr = 0.0, r0 = 0.0;
-
-    if (flag_compute_min_max) {
-        // start (az) and r0 at the outer edge of the first pixel
-        pixazm = radar_grid.azimuthTimeInterval();
-        start = radar_grid.sensingStart() - 0.5 * pixazm;
-        dr = radar_grid.rangePixelSpacing();
-        r0 = radar_grid.startingRange() - 0.5 * dr;
-    }
-
     for (int kk = k_start; kk <= k_end; ++kk) {
         const int k = kk - k_start;
 
@@ -2486,14 +2438,13 @@ void Geocode<T, T_grid>::_getRadarPositionVect(double dem_pos_1, const int k_sta
         int converged =
                 _geo2rdrWrapper(dem_interp_block.proj()->inverse(dem_pos_vect),
                         _ellipsoid, _orbit, _doppler, *az_time, *range_distance,
-                        radar_grid.wavelength(), radar_grid.lookSide(),
-                        az_time_correction, slant_range_correction,
+                        radar_grid, az_time_correction, slant_range_correction,
                         _threshold, _numiter, 1.0e-8, true);
 
         // if it didn't converge, reset initial solution and continue
         if (!converged) {
-            *az_time = radar_grid.sensingMid();
-            *range_distance = radar_grid.midRange();
+            *az_time = radar_grid.azimuthMid();
+            *range_distance = radar_grid.slantRangeMid();
             continue;
         }
 
@@ -2508,8 +2459,8 @@ void Geocode<T, T_grid>::_getRadarPositionVect(double dem_pos_1, const int k_sta
             continue;
 
         // compute min/max pixel indexes
-        double y = (*az_time - start) / pixazm;
-        double x = (*range_distance - r0) / dr;
+        double y = radar_grid.azimuthIndexPoint(*az_time);
+        double x = radar_grid.slantRangeIndexPoint(*range_distance);
 
         // update min and max rg. and az. indexes
         if (std::isnan(*y_min) || y < *y_min)
@@ -2522,6 +2473,7 @@ void Geocode<T, T_grid>::_getRadarPositionVect(double dem_pos_1, const int k_sta
             *x_max = x;
     }
 }
+
 template<class T, class T_grid>
 template<class T2, class T_out>
 void Geocode<T, T_grid>::_runBlock(
@@ -2559,12 +2511,6 @@ void Geocode<T, T_grid>::_runBlock(
 {
 
     using isce3::math::complex_operations::operator*;
-
-    // start (az) and r0 at the outer edge of the first pixel
-    const double pixazm = radar_grid.azimuthTimeInterval();
-    const double start = radar_grid.sensingStart() - 0.5 * pixazm;
-    const double dr = radar_grid.rangePixelSpacing();
-    const double r0 = radar_grid.startingRange() - 0.5 * dr;
 
     // set NaN values according to T_out, i.e. real (NaN) or complex (NaN, NaN)
     using T_out_real = typename isce3::real<T_out>::type;
@@ -2732,8 +2678,8 @@ void Geocode<T, T_grid>::_runBlock(
      n_elements = this_block_size_with_upsampling_y - 1
     */
 
-    double a11 = radar_grid.sensingMid();
-    double r11 = radar_grid.midRange();
+    double a11 = radar_grid.azimuthMid();
+    double r11 = radar_grid.slantRangeMid();
     Vec3 dem11;
 
     // pre-compute radar positions on the top of the geogrid
@@ -3045,8 +2991,7 @@ void Geocode<T, T_grid>::_runBlock(
 
                 int converged = _geo2rdrWrapper(
                         dem_interp_block.proj()->inverse(dem11), _ellipsoid,
-                        _orbit, _doppler, a11, r11, radar_grid.wavelength(),
-                        radar_grid.lookSide(), az_time_correction,
+                        _orbit, _doppler, a11, r11, radar_grid, az_time_correction,
                         slant_range_correction, _threshold, _numiter, 1.0e-8);
 
                 if (!converged) {
@@ -3097,15 +3042,15 @@ void Geocode<T, T_grid>::_runBlock(
                 continue;
             }
 
-            double y00 = (a00 - start) / pixazm;
-            double y10 = (a10 - start) / pixazm;
-            double y01 = (a01 - start) / pixazm;
-            double y11 = (a11 - start) / pixazm;
+            double y00 = radar_grid.azimuthIndexPoint(a00);
+            double y10 = radar_grid.azimuthIndexPoint(a10);
+            double y01 = radar_grid.azimuthIndexPoint(a01);
+            double y11 = radar_grid.azimuthIndexPoint(a11);
 
-            double x00 = (r00 - r0) / dr;
-            double x10 = (r10 - r0) / dr;
-            double x01 = (r01 - r0) / dr;
-            double x11 = (r11 - r0) / dr;
+            double x00 = radar_grid.slantRangeIndexPoint(r00);
+            double x10 = radar_grid.slantRangeIndexPoint(r10);
+            double x01 = radar_grid.slantRangeIndexPoint(r01);
+            double x11 = radar_grid.slantRangeIndexPoint(r11);
 
             int margin = isce3::core::AREA_PROJECTION_RADAR_GRID_MARGIN;
 
