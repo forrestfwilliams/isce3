@@ -1493,6 +1493,58 @@ static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
     return flag_converged;
 }
 
+static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
+        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge = true)
+{
+    int flag_converged;
+    for (int i = 0; i <= static_cast<int>(flag_edge); ++i) {
+        /*
+          Run geo2rdr twice for border edge pixels. This is
+          required because initial guesses (a11 and r11)
+          are not as good for edge elements. Without it,
+          the edge solutions are slightly different than the
+          corresponding solutions from single-block processing.
+       */
+       flag_converged = isce3::geometry::geo2rdr(inputLLH, ellipsoid, orbit,
+                doppler, aztime, slantRange, radar_grid.wavelength(),
+                radar_grid.lookSide(), threshold, maxIter, deltaRange);
+
+       if (!flag_converged) {
+            return flag_converged;
+       }
+    }
+    return flag_converged;
+}
+
+static int _geo2rdrWrapper2(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
+        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
+        const isce3::core::LUT2d<double>& az_time_correction,
+        const isce3::core::LUT2d<double>& slant_range_correction,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge = true)
+{
+    int flag_converged = _geo2rdrGrid(inputLLH, ellipsoid, orbit, doppler,
+            aztime, slantRange, radar_grid, threshold, maxIter, deltaRange, flag_edge);
+    if (!flag_converged) {
+        return flag_converged;
+    }
+    // apply timing corrections
+    if (az_time_correction.contains(aztime, slantRange)) {
+        const auto aztimeCor = az_time_correction.eval(aztime, slantRange);
+        aztime += aztimeCor;
+    }
+
+    if (slant_range_correction.contains(aztime, slantRange)) {
+        const auto srangeCor = slant_range_correction.eval(aztime, slantRange);
+        slantRange += srangeCor;
+    }
+
+    return flag_converged;
+}
 
 /**
 * This function fills up a GCOV raster block with NaNs if the block is
@@ -1640,11 +1692,6 @@ bool Geocode<T, T_grid>::_checkLoadEntireRslcCorners(const double y0, const doub
      covers the RSLC (represented by the radar_grid).
      */
 
-    const double pixazm = radar_grid.azimuthTimeInterval();
-    const double start = radar_grid.sensingStart() - 0.5 * pixazm;
-    const double dr = radar_grid.rangePixelSpacing();
-    const double r0 = radar_grid.startingRange() - 0.5 * dr;
-
     double a_min = std::numeric_limits<double>::quiet_NaN();
     double r_min = std::numeric_limits<double>::quiet_NaN();
     double a_max = std::numeric_limits<double>::quiet_NaN();
@@ -1656,26 +1703,30 @@ bool Geocode<T, T_grid>::_checkLoadEntireRslcCorners(const double y0, const doub
 
     for (auto [dem_y, dem_x] : vertices_positions) {
 
-        double az_time = radar_grid.sensingMid();
-        double range_distance = radar_grid.midRange();
+        double az_value = radar_grid.azimuthMid();
+        double range_value = radar_grid.slantRangeMid();
 
         // Convert DEM coordinates (`dem_x` and `dem_y`) from _epsgOut to DEM
         // EPSG coordinates x and y, interpolate height (z), and return:
         // dem_pos_vect = {x, y, z}
         Vec3 dem_pos_vect = getDemCoords(dem_x, dem_y, dem_interp, proj);
 
-        const int converged = isce3::geometry::geo2rdr(
-                dem_interp.proj()->inverse(dem_pos_vect), _ellipsoid, _orbit,
-                _doppler, az_time, range_distance, radar_grid.wavelength(),
-                radar_grid.lookSide(), _threshold, _numiter, 1.0e-8);
+        // const int converged = isce3::geometry::geo2rdr(
+        //         dem_interp.proj()->inverse(dem_pos_vect), _ellipsoid, _orbit,
+        //         _doppler, az_value, range_value, radar_grid.wavelength(),
+        //         radar_grid.lookSide(), _threshold, _numiter, 1.0e-8);
+        const int converged = _geo2rdrGrid(
+                dem_interp.proj()->inverse(dem_pos_vect), _ellipsoid, _orbit, _doppler,
+                az_value, range_value, radar_grid, _threshold, _numiter, 1.0e-8); 
+
         // if it didn't converge, return false
         if (!converged) {
             return false;
         }
 
         // Convert az. time and range distance to pixel indexes
-        double idx_a = (az_time - start) / pixazm;
-        double idx_r = (range_distance - r0) / dr;
+        double idx_a = radar_grid.azimuthIndexPoint(az_value);
+        double idx_r = radar_grid.slantRangeIndexPoint(range_value);
 
         /*
         If there is at least one point inside the radar grid,

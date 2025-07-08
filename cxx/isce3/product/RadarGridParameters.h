@@ -130,14 +130,25 @@ class isce3::product::RadarGridParameters: public RngAzmGridParameters {
         inline double sensingMid() const {
             return 0.5 * (sensingStart() + sensingStop());
         }
+        
+        inline double azimuthMid() const {
+            return sensingMid();
+        }
 
         /** Get sensing time for a given line (zero-index row) */
         inline double sensingTime(double line) const {
             return _sensingStart + line / _prf;
         }
+
         /** Get azimuth fractional index (line) at a given sensing time */
         inline double azimuthIndex(double az_time) const {
             return (az_time  -  _sensingStart) * _prf;
+        }
+
+        /** Get azimuth fractional index (line) at a given sensing time 
+         * assuming you start from the outer edge */
+        inline double azimuthIndexPoint(double az_time) const {
+            return (az_time  -  (_sensingStart + (0.5/_prf))) * _prf;
         }
 
         /** Get a sensing DateTime for a given line (zero-index row) */
@@ -155,6 +166,11 @@ class isce3::product::RadarGridParameters: public RngAzmGridParameters {
             return 0.5 * (startingRange() + endingRange());
         }
 
+        /** Get middle slant range */
+        inline double slantRangeMid() const {
+            return midRange();
+        }
+
         /** Get slant range for a given sample (zero-index column) */
         inline double slantRange(double sample) const {
             return _startingRange + sample * _rangePixelSpacing;
@@ -163,6 +179,12 @@ class isce3::product::RadarGridParameters: public RngAzmGridParameters {
         /** Get slant range fractional index at a given slant range distance */
         inline double slantRangeIndex(double slant_range) const {
             return (slant_range  -  _startingRange) / _rangePixelSpacing;
+        }
+
+        /** Get slant range fractional index at a given slant range distance 
+         * assuming you start from the outer edge */
+        inline double slantRangeIndexPoint(double slant_range) const {
+            return (slant_range  -  (_startingRange + (0.5 * _rangePixelSpacing))) * _rangePixelSpacing;
         }
 
         /** Crop/ Expand while keeping the spacing the same with top left offset and size */
