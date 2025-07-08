@@ -786,7 +786,7 @@ void Geocode<T, T_grid>::geocodeInterp(
 
                     _baseband(rdrDataBlockTemp, blockStartingRange,
                             blockSensingStart, radar_grid.rangePixelSpacing(),
-                            radar_grid.prf(), _nativeDoppler);
+                            radar_grid.azimuthPixelSpacing(), _nativeDoppler);
                 }
                 for (int i = 0; i < rdrBlockLength; ++i)
                     for (int j = 0; j < rdrBlockWidth; ++j) {
@@ -809,7 +809,7 @@ void Geocode<T, T_grid>::geocodeInterp(
 
                     _baseband(rdrDataBlock, blockStartingRange,
                             blockSensingStart, radar_grid.rangePixelSpacing(),
-                            radar_grid.prf(), _nativeDoppler);
+                            radar_grid.azimuthPixelSpacing(), _nativeDoppler);
                 }
             }
 
@@ -1170,7 +1170,7 @@ template<class T, class T_grid>
 template<class T2>
 void Geocode<T, T_grid>::_baseband(isce3::core::Matrix<T2>& data,
         const double starting_range, const double sensing_start,
-        const double range_pixel_spacing, const double prf,
+        const double range_pixel_spacing, const double azimuth_pixel_spacing,
         const isce3::core::LUT2d<double>& doppler_lut)
 {
     // tells the compiler to ignore these unused variables:
@@ -1178,7 +1178,7 @@ void Geocode<T, T_grid>::_baseband(isce3::core::Matrix<T2>& data,
     (void) starting_range;
     (void) sensing_start;
     (void) range_pixel_spacing;
-    (void) prf;
+    (void) azimuth_pixel_spacing;
     (void) doppler_lut;
 }
 
@@ -1186,7 +1186,7 @@ template<class T, class T_grid>
 template<class T2>
 void Geocode<T, T_grid>::_baseband(isce3::core::Matrix<std::complex<T2>>& data,
         const double starting_range, const double sensing_start,
-        const double range_pixel_spacing, const double prf,
+        const double range_pixel_spacing, const double azimuth_pixel_spacing,
         const isce3::core::LUT2d<double>& doppler_lut)
 {
 
@@ -1197,7 +1197,7 @@ void Geocode<T, T_grid>::_baseband(isce3::core::Matrix<std::complex<T2>>& data,
     for (size_t kk = 0; kk < length * width; ++kk) {
         size_t line = kk / width;
         size_t col = kk % width;
-        const double azimuth_time = sensing_start + line / prf;
+        const double azimuth_time = sensing_start + line * azimuth_pixel_spacing;
         const double slant_range = starting_range + col * range_pixel_spacing;
         const double phase = doppler_lut.eval(azimuth_time, slant_range) * 2 *
                              M_PI * azimuth_time;

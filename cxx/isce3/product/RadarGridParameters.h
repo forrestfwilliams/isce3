@@ -96,6 +96,9 @@ class isce3::product::RadarGridParameters: public RngAzmGridParameters {
         /** Get azimuth time interval in seconds*/
         inline double azimuthTimeInterval() const { return 1.0/_prf; };
 
+        /** Generic wrapper for azimuthTimeInterval */
+        inline double azimuthPixelSpacing() const { return azimuthTimeInterval(); };
+
         /** Get starting slant range in meters*/
         inline double startingRange() const { return _startingRange; }
 
