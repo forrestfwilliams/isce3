@@ -90,23 +90,48 @@ void _clip_min_max(std::complex<T>& radar_value, float clip_min, float clip_max)
         radar_value *= clip_max / std::abs(radar_value);
 }
 
+// TODO: this is a direct copy from geocodeCov.cpp - maybe merge?
+static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
+        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge = true)
+{
+    int flag_converged;
+    for (int i = 0; i <= static_cast<int>(flag_edge); ++i) {
+        /*
+          Run geo2rdr twice for border edge pixels. This is
+          required because initial guesses (a11 and r11)
+          are not as good for edge elements. Without it,
+          the edge solutions are slightly different than the
+          corresponding solutions from single-block processing.
+       */
+       flag_converged = isce3::geometry::geo2rdr(inputLLH, ellipsoid, orbit,
+                doppler, aztime, slantRange, radar_grid.wavelength(),
+                radar_grid.lookSide(), threshold, maxIter, deltaRange);
 
+       if (!flag_converged) {
+            return flag_converged;
+       }
+    }
+    return flag_converged;
+}
+
+// TODO: make a template function
+// TODO: this is a direct copy from geocodeCov.cpp - maybe merge?
 static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
-        double& slantRange, double wavelength, LookSide side,
+        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
         const isce3::core::LUT2d<double>& az_time_correction,
         const isce3::core::LUT2d<double>& slant_range_correction,
-        double threshold, int maxIter, double deltaRange)
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge = true)
 {
-    // run geo2rdr()
-    int flag_converged = isce3::geometry::geo2rdr(inputLLH, ellipsoid, orbit,
-        doppler, aztime, slantRange, wavelength, side, threshold,
-        maxIter, deltaRange);
-
+    int flag_converged = _geo2rdrGrid(inputLLH, ellipsoid, orbit, doppler,
+            aztime, slantRange, radar_grid, threshold, maxIter, deltaRange, flag_edge);
     if (!flag_converged) {
         return flag_converged;
     }
-
     // apply timing corrections
     if (az_time_correction.contains(aztime, slantRange)) {
         const auto aztimeCor = az_time_correction.eval(aztime, slantRange);
@@ -850,8 +875,8 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
             const Vec3 inputLLH = dem_interp.proj()->inverse(inputDEM);
             // Should incorporate check on return status here
             int converged = _geo2rdrWrapper(inputLLH, ellps, orbit, input_dop,
-                    a, r, radar_grid.wavelength(), side, az_time_correction,
-                    slant_range_correction, threshold, num_iter, delta_range);
+                    a, r, radar_grid, az_time_correction, slant_range_correction,
+                    threshold, num_iter, delta_range, false);
 
             if (!converged)
                 continue;
@@ -1205,26 +1230,15 @@ void _RunBlock(const int jmax, const int block_size,
         dem11 = getDemCoords(dem_x1, dem_y1, dem_interp_block, proj);
         // course
         int converged = _geo2rdrWrapper(dem_interp_block.proj()->inverse(dem11),
-                ellipsoid, orbit, dop, a11, r11, radar_grid.wavelength(), side,
+                ellipsoid, orbit, dop, a11, r11, radar_grid,
                 az_time_correction, slant_range_correction,
-                threshold, num_iter, delta_range);
+                threshold, num_iter, delta_range, true);
+
         if (!converged) {
             a11 = radar_grid.azimuthMid();
             r11 = radar_grid.slantRangeMid();
             continue;
         }
-        /*
-           Accurate geo2rdr:
-           This is required because initial guesses (a11 and r11)
-           are not as good for border elements. This was causing slightly
-           different results for these elements when compared to
-           the single-block solution.
-        */
-        _geo2rdrWrapper(dem_interp_block.proj()->inverse(dem11), ellipsoid,
-                 orbit, dop, a11, r11, radar_grid.wavelength(), side,
-                 az_time_correction, slant_range_correction,
-                 threshold, num_iter,
-                 delta_range);
 
         a_last[jj] = a11;
         r_last[jj] = r11;
@@ -1249,9 +1263,10 @@ void _RunBlock(const int jmax, const int block_size,
         dem11 = getDemCoords(dem_x1_0, dem_y1, dem_interp_block, proj);
 
         int converged = _geo2rdrWrapper(dem_interp_block.proj()->inverse(dem11),
-                ellipsoid, orbit, dop, a11, r11, radar_grid.wavelength(), side,
+                ellipsoid, orbit, dop, a11, r11, radar_grid,
                 az_time_correction, slant_range_correction,
-                threshold, num_iter, delta_range);
+                threshold, num_iter, delta_range, false);
+
         if (!converged) {
             a11 = std::numeric_limits<double>::quiet_NaN();
             r11 = std::numeric_limits<double>::quiet_NaN();
@@ -1304,9 +1319,10 @@ void _RunBlock(const int jmax, const int block_size,
             dem11 = getDemCoords(dem_x1, dem_y1, dem_interp_block, proj);
 
             int converged = _geo2rdrWrapper(dem_interp_block.proj()->inverse(dem11),
-                    ellipsoid, orbit, dop, a11, r11, radar_grid.wavelength(),
-                    side, az_time_correction, slant_range_correction,
-                    threshold, num_iter, delta_range);
+                    ellipsoid, orbit, dop, a11, r11, radar_grid,
+                    az_time_correction, slant_range_correction,
+                    threshold, num_iter, delta_range, false);
+
             if (!converged) {
                 a11 = std::numeric_limits<double>::quiet_NaN();
                 r11 = std::numeric_limits<double>::quiet_NaN();
@@ -1397,9 +1413,9 @@ void _RunBlock(const int jmax, const int block_size,
             double r_c = (r00 + r01 + r10 + r11) / 4.0;
 
             converged = _geo2rdrWrapper(dem_interp_block.proj()->inverse(dem_c),
-                    ellipsoid, orbit, dop, a_c, r_c, radar_grid.wavelength(),
-                    side, az_time_correction, slant_range_correction, threshold,
-                    num_iter, delta_range);
+                    ellipsoid, orbit, dop, a_c, r_c, radar_grid,
+                    az_time_correction, slant_range_correction, threshold,
+                    num_iter, delta_range, false);
 
             if (!converged) {
                 a_c = std::numeric_limits<double>::quiet_NaN();
