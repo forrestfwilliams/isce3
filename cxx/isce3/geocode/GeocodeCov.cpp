@@ -627,7 +627,7 @@ void Geocode<T, T_grid>::geocodeInterp(
             double aztime, srange;
             float dem_value;
 
-            aztime = radar_grid.sensingMid();
+            aztime = radar_grid.azimuthMid();
             int converged = _geo2rdr(radar_grid, x, y, aztime, srange,
                     demInterp, proj.get(), dem_value);
 
@@ -659,11 +659,8 @@ void Geocode<T, T_grid>::geocodeInterp(
                 continue;
 
             // get the row and column index in the radar grid
-            double rdrY = ((aztime - radar_grid.sensingStart()) /
-                           radar_grid.azimuthTimeInterval());
-
-            double rdrX = ((srange - radar_grid.startingRange()) /
-                           radar_grid.rangePixelSpacing());
+            double rdrY = radar_grid.azimuthIndex(aztime);
+            double rdrX = radar_grid.slantRangeIndex(srange);
 
             // (optional arg) save rdr pos element
             if (out_geo_rdr != nullptr) {
@@ -784,12 +781,8 @@ void Geocode<T, T_grid>::geocodeInterp(
                 if (flag_az_baseband_doppler) {
 
                     // baseband the SLC in the radar grid
-                    const double blockStartingRange =
-                            radar_grid.startingRange() +
-                            rangeFirstPixel * radar_grid.rangePixelSpacing();
-                    const double blockSensingStart =
-                            radar_grid.sensingStart() +
-                            azimuthFirstLine / radar_grid.prf();
+                    const double blockStartingRange = radar_grid.slantRange(rangeFirstPixel);
+                    const double blockSensingStart = radar_grid.azimuth(azimuthFirstLine);
 
                     _baseband(rdrDataBlockTemp, blockStartingRange,
                             blockSensingStart, radar_grid.rangePixelSpacing(),
@@ -811,12 +804,8 @@ void Geocode<T, T_grid>::geocodeInterp(
                 if (flag_az_baseband_doppler) {
 
                     // baseband the SLC in the radar grid
-                    const double blockStartingRange =
-                            radar_grid.startingRange() +
-                            rangeFirstPixel * radar_grid.rangePixelSpacing();
-                    const double blockSensingStart =
-                            radar_grid.sensingStart() +
-                            azimuthFirstLine / radar_grid.prf();
+                    const double blockStartingRange = radar_grid.slantRange(rangeFirstPixel);
+                    const double blockSensingStart = radar_grid.azimuth(azimuthFirstLine);
 
                     _baseband(rdrDataBlock, blockStartingRange,
                             blockSensingStart, radar_grid.rangePixelSpacing(),
@@ -1236,9 +1225,9 @@ int Geocode<T, T_grid>::_geo2rdr(const T_grid& radar_grid,
     dem_value = llh[2];
 
     // Perform geo->rdr iterations
-    int converged = isce3::geometry::geo2rdr(llh, _ellipsoid, _orbit, _doppler,
-            azimuthTime, slantRange, radar_grid.wavelength(),
-            radar_grid.lookSide(), _threshold, _numiter, 1.0e-8);
+    int converged = _geo2rdrGrid(llh, _ellipsoid, _orbit, _doppler,
+            azimuthTime, slantRange, radar_grid, _threshold,
+            _numiter, 1.0e-8, false);
 
     // Check convergence
     if (converged == 0) {

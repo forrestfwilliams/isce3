@@ -32,6 +32,10 @@ enum geocodeOutputMode {
     AREA_PROJECTION = 1,
 };
 
+/** Wrapper function to simplify calling geo2rdr with different grid types */
+static int _geo2rdrGrid(const Vec3&, const Ellipsoid&, const Orbit&, const LUT2d<double>&,
+                        double&, double&, const isce3::product::RadarGridParameters&,
+                        double, int, double, bool);
 
 template<class T, class T_grid = isce3::product::RadarGridParameters>
 class Geocode {

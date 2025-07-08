@@ -140,6 +140,11 @@ class isce3::product::RadarGridParameters: public RngAzmGridParameters {
             return _sensingStart + line / _prf;
         }
 
+        /** Generic name for sensingTime */
+        inline double azimuth(double line) const {
+            return sensingTime(line);
+        }
+
         /** Get azimuth fractional index (line) at a given sensing time */
         inline double azimuthIndex(double az_time) const {
             return (az_time  -  _sensingStart) * _prf;
