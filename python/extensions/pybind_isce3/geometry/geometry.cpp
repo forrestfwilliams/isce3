@@ -58,9 +58,9 @@ void addsubmodule_geometry(py::module & m)
     addbinding(pyGeo2RdrParams);
     addbinding(pyRdr2GeoParams);
 
-    addbinding_apply_rtc(geometry);
-    addbinding_compute_rtc(geometry);
-    addbinding_compute_rtc_bbox(geometry);
+    addbinding_apply_rtc<isce3::product::RadarGridParameters>(geometry);
+    addbinding_compute_rtc<isce3::product::RadarGridParameters>(geometry);
+    addbinding_compute_rtc_bbox<isce3::product::RadarGridParameters>(geometry);
     addbinding_get_geolocation_grid(geometry);
     addbinding_geo2rdr(geometry);
     addbinding_geo2rdr_roots(geometry);

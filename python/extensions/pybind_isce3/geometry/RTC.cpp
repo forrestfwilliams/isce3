@@ -67,10 +67,11 @@ void addbinding(py::enum_<rtcAreaBetaMode> & pyAreaBetaMode)
                   `A_beta = A_sigma * cos(projection_angle).)");
 }
 
-
+template<typename T_grid>
 void addbinding_apply_rtc(pybind11::module& m)
 {
-    m.def("apply_rtc", &isce3::geometry::applyRtc, py::arg("radar_grid"),
+    m.def("apply_rtc", &isce3::geometry::applyRtc<T_grid>,
+            py::arg("radar_grid"),
             py::arg("orbit"), py::arg("input_dop"), py::arg("input_raster"),
             py::arg("dem_raster"), py::arg("output_raster"),
             py::arg("input_terrain_radiometry") =
@@ -157,11 +158,12 @@ void addbinding_apply_rtc(pybind11::module& m)
               )");
 }
 
+template<typename T_grid>
 void addbinding_compute_rtc(pybind11::module& m)
 {
     const isce3::geometry::detail::Geo2RdrParams defaults;
     m.def("compute_rtc",
-            py::overload_cast<const isce3::product::RadarGridParameters&,
+            py::overload_cast<const T_grid&,
                     const isce3::core::Orbit&,
                     const isce3::core::LUT2d<double>&, isce3::io::Raster&,
                     isce3::io::Raster&, rtcInputTerrainRadiometry,
@@ -173,7 +175,7 @@ void addbinding_compute_rtc(pybind11::module& m)
                     isce3::core::MemoryModeBlocksY,
                     isce3::core::dataInterpMethod, double, int, double,
                     const long long, const long long>(
-                    &isce3::geometry::computeRtc<isce3::product::RadarGridParameters>),
+                    &isce3::geometry::computeRtc<T_grid>),
             py::arg("radar_grid"), py::arg("orbit"), py::arg("input_dop"),
             py::arg("dem"), py::arg("output_raster"),
             py::arg("input_terrain_radiometry") =
@@ -259,12 +261,13 @@ void addbinding_compute_rtc(pybind11::module& m)
              )");
 }
 
+template<typename T_grid>
 void addbinding_compute_rtc_bbox(pybind11::module& m)
 {
     const isce3::geometry::detail::Geo2RdrParams defaults;
     m.def("compute_rtc_bbox",
             py::overload_cast<isce3::io::Raster&, isce3::io::Raster&,
-                    const isce3::product::RadarGridParameters&,
+                    const T_grid&,
                     const isce3::core::Orbit&,
                     const isce3::core::LUT2d<double>&, const double,
                     const double, const double, const double, const int,
@@ -278,7 +281,7 @@ void addbinding_compute_rtc_bbox(pybind11::module& m)
                     isce3::core::MemoryModeBlocksY,
                     isce3::core::dataInterpMethod, double, int, double,
                     const long long, const long long>(
-                    &isce3::geometry::computeRtc<isce3::product::RadarGridParameters>),
+                    &isce3::geometry::computeRtc<T_grid>),
             py::arg("dem_raster"), py::arg("output_raster"),
             py::arg("radar_grid"), py::arg("orbit"), py::arg("input_dop"),
             py::arg("y0"), py::arg("dy"), py::arg("x0"), py::arg("dx"),
@@ -387,3 +390,7 @@ void addbinding_compute_rtc_bbox(pybind11::module& m)
                 Maximum block size
              )");
 }
+
+template void addbinding_apply_rtc<isce3::product::RadarGridParameters>(pybind11::module&);
+template void addbinding_compute_rtc<isce3::product::RadarGridParameters>(pybind11::module&);
+template void addbinding_compute_rtc_bbox<isce3::product::RadarGridParameters>(pybind11::module&);

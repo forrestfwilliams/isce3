@@ -93,7 +93,8 @@ enum rtcAreaBetaMode {
  * @param[out] output_rtc          Output RTC area normalization factor
  * @param[in]  rtc_memory_mode     Select memory mode
  * */
-void applyRtc(const isce3::product::RadarGridParameters& radarGrid,
+template<class T_grid>
+void applyRtc(const T_grid& radarGrid,
         const isce3::core::Orbit& orbit, const isce3::core::LUT2d<double>& dop,
         isce3::io::Raster& input_raster, isce3::io::Raster& dem_raster,
         isce3::io::Raster& output_raster,

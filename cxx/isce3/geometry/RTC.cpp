@@ -317,7 +317,8 @@ void _normalizeRtcArea(isce3::core::Matrix<float>& numerator_array,
             }
 }
 
-void applyRtc(const isce3::product::RadarGridParameters& radar_grid,
+template<class T_grid>
+void applyRtc(const T_grid& radar_grid,
         const isce3::core::Orbit& orbit,
         const isce3::core::LUT2d<double>& input_dop,
         isce3::io::Raster& input_raster, isce3::io::Raster& dem_raster,
@@ -1934,6 +1935,22 @@ void print_parameters(pyre::journal::info_t& channel,
             << pyre::journal::newline << pyre::journal::endl;
 }
 
+template void applyRtc<isce3::product::RadarGridParameters>(
+        const isce3::product::RadarGridParameters&,
+        const isce3::core::Orbit&,
+        const isce3::core::LUT2d<double>&,
+        isce3::io::Raster&, isce3::io::Raster&,
+        isce3::io::Raster&,
+        rtcInputTerrainRadiometry,
+        rtcOutputTerrainRadiometry, int,
+        rtcAreaMode, rtcAlgorithm, rtcAreaBetaMode,
+        double, float, double, float, float,
+        isce3::io::Raster*,
+        const isce3::core::LUT2d<double>&,
+        const isce3::core::LUT2d<double>&,
+        isce3::io::Raster*, isce3::io::Raster*,
+        isce3::core::MemoryModeBlocksY);
+
 template void isce3::geometry::computeRtc<isce3::product::RadarGridParameters>(
     const isce3::product::RadarGridParameters&,
     const isce3::core::Orbit&,
@@ -1957,4 +1974,25 @@ template void isce3::geometry::computeRtc<isce3::product::RadarGridParameters>(
     double,
     long long,
     long long);
+
+template void isce3::geometry::computeRtc<isce3::product::RadarGridParameters>(
+        isce3::io::Raster&, isce3::io::Raster&,
+        const isce3::product::RadarGridParameters&,
+        const isce3::core::Orbit&,
+        const isce3::core::LUT2d<double>&, const double,
+        const double, const double, const double,
+        const int, const int, const int,
+        rtcInputTerrainRadiometry,
+        rtcOutputTerrainRadiometry,
+        rtcAreaMode, rtcAlgorithm,
+        rtcAreaBetaMode,
+        double, float,
+        isce3::io::Raster*,
+        isce3::io::Raster*, isce3::io::Raster*,
+        const isce3::core::LUT2d<double>&,
+        const isce3::core::LUT2d<double>&,
+        isce3::core::MemoryModeBlocksY,
+        isce3::core::dataInterpMethod, double,
+        int, double, const long long,
+        const long long);
 }} // namespace isce3::geometry
