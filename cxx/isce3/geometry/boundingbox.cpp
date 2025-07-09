@@ -29,6 +29,17 @@ using isce3::core::Vec3;
 using isce3::core::ProjectionBase;
 using isce3::core::Basis;
 
+int isce3::geometry::rdr2geo_bracketWrapper(
+        double aztime, double slantRange, double doppler,
+        const isce3::core::Orbit& orbit, const isce3::geometry::DEMInterpolator& demInterp,
+        Vec3 &xyz, const isce3::product::RadarGridParameters &radarGrid,
+        const double threshold)
+{
+    const int converged = rdr2geo_bracket(aztime, slantRange, doppler,
+            orbit, demInterp, xyz, radarGrid.wavelength(),
+            radarGrid.lookSide(), threshold);
+    return converged;
+}
 
 isce3::geometry::Perimeter
 isce3::geometry::
@@ -57,8 +68,8 @@ getGeoPerimeter(const isce3::product::RadarGridParameters &radarGrid,
     const isce3::core::Ellipsoid &ellipsoid = proj->ellipsoid();
 
     // Polygon ABCD defined by four corners of radar grid.
-    const double t0 = radarGrid.sensingTime(0);
-    const double t1 = radarGrid.sensingTime(radarGrid.length() - 1);
+    const double t0 = radarGrid.azimuth(0);
+    const double t1 = radarGrid.azimuth(radarGrid.length() - 1);
     const double r0 = radarGrid.slantRange(0);
     const double r1 = radarGrid.slantRange(radarGrid.width() - 1);
 
@@ -88,9 +99,8 @@ getGeoPerimeter(const isce3::product::RadarGridParameters &radarGrid,
         Vec3 xyz, llh;
         const auto fd = doppler.eval(point.time, point.range);
 
-        const auto converged = rdr2geo_bracket(point.time, point.range, fd,
-                orbit, demInterp, xyz, radarGrid.wavelength(),
-                radarGrid.lookSide(), threshold);
+        const auto converged = rdr2geo_bracketWrapper(point.time, point.range, fd,
+                orbit, demInterp, xyz, radarGrid, threshold);
 
         if (not converged) {
             std::string err = "Error transforming RadarCoord(time=" +
