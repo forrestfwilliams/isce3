@@ -152,7 +152,8 @@ void applyRtc(const isce3::product::RadarGridParameters& radarGrid,
  * @param[in]  min_block_size       Minimum block size (per thread)
  * @param[in]  max_block_size       Maximum block size (per thread)
  * */
-void computeRtc(const isce3::product::RadarGridParameters& radarGrid,
+template<class T_grid>
+void computeRtc(const T_grid& radarGrid,
         const isce3::core::Orbit& orbit, const isce3::core::LUT2d<double>& dop,
         isce3::io::Raster& dem, isce3::io::Raster& output_raster,
         rtcInputTerrainRadiometry inputTerrainRadiometry =
@@ -222,8 +223,9 @@ void computeRtc(const isce3::product::RadarGridParameters& radarGrid,
  * @param[in]  min_block_size       Minimum block size (per thread)
  * @param[in]  max_block_size       Maximum block size (per thread)
  * */
+template<class T_grid>
 void computeRtc(isce3::io::Raster& dem_raster, isce3::io::Raster& output_raster,
-        const isce3::product::RadarGridParameters& radarGrid,
+        const T_grid& radarGrid,
         const isce3::core::Orbit& orbit, const isce3::core::LUT2d<double>& dop,
         const double y0, const double dy, const double x0, const double dx,
         const int geogrid_length, const int geogrid_width, const int epsg,
@@ -277,9 +279,10 @@ void computeRtc(isce3::io::Raster& dem_raster, isce3::io::Raster& output_raster,
  * @param[in]  slant_range_correction  Slant range additive correction,
  * in meters, as a function of azimuth and range
  * */
+template<class T_grid>
 void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
         isce3::io::Raster& output_raster,
-        const isce3::product::RadarGridParameters& radarGrid,
+        const T_grid& radarGrid,
         const isce3::core::Orbit& orbit, const isce3::core::LUT2d<double>& dop,
         const isce3::product::GeoGridParameters& geogrid,
         rtcInputTerrainRadiometry input_terrain_radiometry =
@@ -334,9 +337,10 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
  * @param[in]  min_block_size       Minimum block size (per thread)
  * @param[in]  max_block_size       Maximum block size (per thread)
  * */
+template<class T_grid>
 void computeRtcAreaProj(isce3::io::Raster& dem,
         isce3::io::Raster& output_raster,
-        const isce3::product::RadarGridParameters& radarGrid,
+        const T_grid& radarGrid,
         const isce3::core::Orbit& orbit, const isce3::core::LUT2d<double>& dop,
         const isce3::product::GeoGridParameters& geogrid,
         rtcInputTerrainRadiometry input_terrain_radiometry =
@@ -377,8 +381,9 @@ std::string get_rtc_area_mode_str(rtcAreaMode rtc_area_mode);
 std::string get_rtc_area_beta_mode_str(rtcAreaBetaMode rtc_area_beta_mode);
 std::string get_rtc_algorithm_str(rtcAlgorithm rtc_algorithm);
 
+template<class T_grid>
 void print_parameters(pyre::journal::info_t& channel,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const T_grid& radar_grid,
         rtcInputTerrainRadiometry input_terrain_radiometry,
         rtcOutputTerrainRadiometry output_terrain_radiometry,
         rtcAreaMode rtc_area_mode,

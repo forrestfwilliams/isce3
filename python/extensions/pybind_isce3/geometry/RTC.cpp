@@ -173,7 +173,7 @@ void addbinding_compute_rtc(pybind11::module& m)
                     isce3::core::MemoryModeBlocksY,
                     isce3::core::dataInterpMethod, double, int, double,
                     const long long, const long long>(
-                    &isce3::geometry::computeRtc),
+                    &isce3::geometry::computeRtc<isce3::product::RadarGridParameters>),
             py::arg("radar_grid"), py::arg("orbit"), py::arg("input_dop"),
             py::arg("dem"), py::arg("output_raster"),
             py::arg("input_terrain_radiometry") =
@@ -278,7 +278,7 @@ void addbinding_compute_rtc_bbox(pybind11::module& m)
                     isce3::core::MemoryModeBlocksY,
                     isce3::core::dataInterpMethod, double, int, double,
                     const long long, const long long>(
-                    &isce3::geometry::computeRtc),
+                    &isce3::geometry::computeRtc<isce3::product::RadarGridParameters>),
             py::arg("dem_raster"), py::arg("output_raster"),
             py::arg("radar_grid"), py::arg("orbit"), py::arg("input_dop"),
             py::arg("y0"), py::arg("dy"), py::arg("x0"), py::arg("dx"),

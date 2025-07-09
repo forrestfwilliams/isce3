@@ -119,9 +119,10 @@ static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
 
 // TODO: make a template function
 // TODO: this is a direct copy from geocodeCov.cpp - maybe merge?
+template<class T_grid>
 static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
-        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
+        double& slantRange, const T_grid& radar_grid,
         const isce3::core::LUT2d<double>& az_time_correction,
         const isce3::core::LUT2d<double>& slant_range_correction,
         double threshold, int maxIter, double deltaRange,
@@ -457,8 +458,8 @@ double computeUpsamplingFactor(const DEMInterpolator& dem_interp,
     return upsampling_factor;
 }
 
-
-void computeRtc(const isce3::product::RadarGridParameters& radar_grid,
+template<class T_grid>
+void computeRtc(const T_grid& radar_grid,
         const isce3::core::Orbit& orbit,
         const isce3::core::LUT2d<double>& input_dop,
         isce3::io::Raster& dem_raster, isce3::io::Raster& output_raster,
@@ -510,8 +511,9 @@ void computeRtc(const isce3::product::RadarGridParameters& radar_grid,
             max_block_size);
 }
 
+template<class T_grid>
 void computeRtc(isce3::io::Raster& dem_raster, isce3::io::Raster& output_raster,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const T_grid& radar_grid,
         const isce3::core::Orbit& orbit,
         const isce3::core::LUT2d<double>& input_dop, const double y0,
         const double dy, const double x0, const double dx,
@@ -1114,6 +1116,7 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
          << pyre::journal::endl;
 }
 
+template<class T_grid>
 void _RunBlock(const int jmax, const int block_size,
         const int block_size_with_upsampling, const int block,
         long long& numdone, const long long progress_block,
@@ -1123,7 +1126,7 @@ void _RunBlock(const int jmax, const int block_size,
         isce3::io::Raster* out_geo_grid, const double start,
         const double pixazm, const double dr, double r0, int xbound, int ybound,
         const isce3::product::GeoGridParameters& geogrid,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const T_grid& radar_grid,
         const isce3::core::LUT2d<double>& dop,
         const isce3::core::Ellipsoid& ellipsoid,
         const isce3::core::Orbit& orbit, double threshold, int num_iter,
@@ -1612,9 +1615,10 @@ void _RunBlock(const int jmax, const int block_size,
         }
 }
 
+template<class T_grid>
 void computeRtcAreaProj(isce3::io::Raster& dem_raster,
         isce3::io::Raster& output_raster,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const T_grid& radar_grid,
         const isce3::core::Orbit& orbit,
         const isce3::core::LUT2d<double>& input_dop,
         const isce3::product::GeoGridParameters& geogrid,
@@ -1893,8 +1897,9 @@ std::string get_rtc_algorithm_str(rtcAlgorithm rtc_algorithm)
     return rtc_algorithm_str;
 }
 
+template<class T_grid>
 void print_parameters(pyre::journal::info_t& channel,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const T_grid& radar_grid,
         rtcInputTerrainRadiometry input_terrain_radiometry,
         rtcOutputTerrainRadiometry output_terrain_radiometry,
         rtcAreaMode rtc_area_mode, rtcAreaBetaMode rtc_area_beta_mode,
@@ -1928,4 +1933,28 @@ void print_parameters(pyre::journal::info_t& channel,
             << "RTC min value [dB]: " << rtc_min_value_db
             << pyre::journal::newline << pyre::journal::endl;
 }
+
+template void isce3::geometry::computeRtc<isce3::product::RadarGridParameters>(
+    const isce3::product::RadarGridParameters&,
+    const isce3::core::Orbit&,
+    const isce3::core::LUT2d<double>&,
+    isce3::io::Raster&,
+    isce3::io::Raster&,
+    isce3::geometry::rtcInputTerrainRadiometry,
+    isce3::geometry::rtcOutputTerrainRadiometry,
+    isce3::geometry::rtcAreaMode,
+    isce3::geometry::rtcAlgorithm,
+    isce3::geometry::rtcAreaBetaMode,
+    double,
+    float,
+    isce3::io::Raster*,
+    const isce3::core::LUT2d<double>&,
+    const isce3::core::LUT2d<double>&,
+    isce3::core::MemoryModeBlocksY,
+    isce3::core::dataInterpMethod,
+    double,
+    int,
+    double,
+    long long,
+    long long);
 }} // namespace isce3::geometry
