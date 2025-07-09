@@ -41,9 +41,10 @@ int isce3::geometry::rdr2geo_bracketWrapper(
     return converged;
 }
 
+template<class T_grid>
 isce3::geometry::Perimeter
 isce3::geometry::
-getGeoPerimeter(const isce3::product::RadarGridParameters &radarGrid,
+getGeoPerimeter(const T_grid &radarGrid,
                 const isce3::core::Orbit &orbit,
                 const isce3::core::ProjectionBase *proj,
                 const isce3::core::LUT2d<double> &doppler,
@@ -185,8 +186,9 @@ static void _addMarginToBoundingBox(isce3::geometry::BoundingBox& bbox,
     }
 }
 
+template<class T_grid>
 isce3::geometry::BoundingBox isce3::geometry::getGeoBoundingBox(
-        const isce3::product::RadarGridParameters& radarGrid,
+        const T_grid& radarGrid,
         const isce3::core::Orbit& orbit, const isce3::core::ProjectionBase* proj,
         const isce3::core::LUT2d<double>& doppler,
         const std::vector<double>& hgts, const double margin,
@@ -260,8 +262,9 @@ static bool _isValid(isce3::geometry::BoundingBox bbox) {
        and valid(bbox.MinY) and valid(bbox.MaxY);
 }
 
+template<class T_grid>
 static isce3::geometry::BoundingBox _getGeoBoundingBoxBinarySearch(
-        const isce3::product::RadarGridParameters& radarGrid,
+        const T_grid& radarGrid,
         const isce3::core::Orbit& orbit,
         const isce3::core::ProjectionBase* proj,
         const isce3::core::LUT2d<double>& doppler, double min_height,
@@ -322,8 +325,9 @@ static isce3::geometry::BoundingBox _getGeoBoundingBoxBinarySearch(
     return bbox_result;
 }
 
+template<class T_grid>
 isce3::geometry::BoundingBox isce3::geometry::getGeoBoundingBoxHeightSearch(
-        const isce3::product::RadarGridParameters& radarGrid,
+        const T_grid& radarGrid,
         const isce3::core::Orbit& orbit, const isce3::core::ProjectionBase* proj,
         const isce3::core::LUT2d<double>& doppler, double min_height,
         double max_height, const double margin, const int pointsPerEdge,
@@ -649,3 +653,26 @@ isce3::geometry::RadarGridBoundingBox isce3::geometry::getRadarBoundingBox(
 
     return rdrBBox;
 }
+
+template isce3::geometry::BoundingBox isce3::geometry::getGeoBoundingBoxHeightSearch<isce3::product::RadarGridParameters>(
+        const isce3::product::RadarGridParameters&,
+        const isce3::core::Orbit&,
+        const isce3::core::ProjectionBase*,
+        const isce3::core::LUT2d<double>&,
+        double, double, const double, const int,
+        const double, const double);
+
+template isce3::geometry::Perimeter isce3::geometry::getGeoPerimeter<isce3::product::RadarGridParameters>(
+    const isce3::product::RadarGridParameters&,
+    const isce3::core::Orbit&,
+    const isce3::core::ProjectionBase*,
+    const isce3::core::LUT2d<double>&,
+    const isce3::geometry::DEMInterpolator&,
+    int, double);
+
+template isce3::geometry::BoundingBox isce3::geometry::getGeoBoundingBox<isce3::product::RadarGridParameters>(
+        const isce3::product::RadarGridParameters&,
+        const isce3::core::Orbit&, const isce3::core::ProjectionBase*,
+        const isce3::core::LUT2d<double>&, 
+        const std::vector<double>&, const double,
+        const int, const double, bool);
