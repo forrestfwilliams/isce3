@@ -23,10 +23,12 @@ class isce3::product::RngAzmGridParameters {
         virtual double azimuth(double) const = 0;
         virtual double azimuthIndex(double) const = 0;
         virtual double azimuthIndexPoint(double) const = 0;
+        virtual double azimuthMid() const = 0;
         virtual double rangePixelSpacing() const = 0;
         virtual double slantRange(double) const = 0;
         virtual double slantRangeIndex(double) const = 0;
         virtual double slantRangeIndexPoint(double) const = 0;
+        virtual double slantRangeMid() const = 0;
 
         /** Virtual destructor */
         virtual ~RngAzmGridParameters() = default;

@@ -1471,7 +1471,7 @@ static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         const Orbit& orbit, const LUT2d<double>& doppler, double& azdist,
         double& slantRange, const isce3::product::PolarGridParameters& radar_grid,
         double threshold, int maxIter, double deltaRange,
-        bool flag_edge = false)
+        bool flag_edge = true)
 {
     int flag_converged;
     flag_converged = isce3::geometry::geo2rdr(inputLLH,

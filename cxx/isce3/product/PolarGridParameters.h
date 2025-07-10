@@ -166,6 +166,8 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
             return (az_dist - 0.5 * _azimuthPixelSpacing) / _azimuthPixelSpacing;
         }
 
+        inline double azimuthMid() const {return _azimuthCenterPixel * _azimuthPixelSpacing;}
+
         /** Get range distance for a fractional range index */
         inline double slantRange(double slant_range) const {
             return slant_range * _rangePixelSpacing;
@@ -181,6 +183,8 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
         inline double slantRangeIndexPoint(double sr_dist) const {
             return (sr_dist - 0.5 * _rangePixelSpacing) / _rangePixelSpacing;
         }
+
+        inline double slantRangeMid() const {return _rangeCenterPixel * _rangePixelSpacing;}
 
         /** Get the polar matrix */
         inline isce3::core::EMatrix2D<double, 2, 2> polarMatrix() const {return _polarMatrix;}
