@@ -149,7 +149,39 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
 
         /** Get total number of radar grid elements */
         inline size_t size() const { return _rlength * _rwidth; }
-        
+
+        /** Get azimuth distance for a fractional line index */
+        inline double azimuth(double line) const {
+            return line * _azimuthPixelSpacing;
+        }
+
+        /** Get fractional line index for an azimuth distance */
+        inline double azimuthIndex(double az_dist) const {
+            return az_dist  / _azimuthPixelSpacing;
+        }
+
+        /** Get fractional line index for an azimuth distance
+         * assuming you start from the outer edge */
+        inline double azimuthIndexPoint(double az_dist) const {
+            return (az_dist - 0.5 * _azimuthPixelSpacing) / _azimuthPixelSpacing;
+        }
+
+        /** Get range distance for a fractional range index */
+        inline double slantRange(double slant_range) const {
+            return slant_range * _rangePixelSpacing;
+        }
+
+        /** Get fractional range index for a range distance */
+        inline double slantRangeIndex(double sr_dist) const {
+            return sr_dist  / _rangePixelSpacing;
+        }
+
+        /** Get fractional range index for a range distance
+         * assuming you start from the outer edge */
+        inline double slantRangeIndexPoint(double sr_dist) const {
+            return (sr_dist - 0.5 * _rangePixelSpacing) / _rangePixelSpacing;
+        }
+
         /** Crop/ Expand while keeping the spacing the same with top left offset and size */
         inline PolarGridParameters offsetAndResize(double yoff, double xoff, size_t ysize, size_t xsize) const
         {

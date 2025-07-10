@@ -17,6 +17,16 @@ class isce3::product::RngAzmGridParameters {
 
     public:
         virtual void validate() const = 0;
+        virtual size_t length() const = 0;
+        virtual size_t width() const = 0;
+        virtual double azimuthPixelSpacing() const = 0;
+        virtual double azimuth(double) const = 0;
+        virtual double azimuthIndex(double) const = 0;
+        virtual double azimuthIndexPoint(double) const = 0;
+        virtual double rangePixelSpacing() const = 0;
+        virtual double slantRange(double) const = 0;
+        virtual double slantRangeIndex(double) const = 0;
+        virtual double slantRangeIndexPoint(double) const = 0;
 
         /** Virtual destructor */
         virtual ~RngAzmGridParameters() = default;
