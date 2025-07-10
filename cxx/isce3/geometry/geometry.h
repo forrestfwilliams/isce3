@@ -184,6 +184,15 @@ int geo2rdr(const isce3::core::Vec3& inputLLH,
         double& slantRange, double wavelength, isce3::core::LookSide side,
         double threshold, int maxIter, double deltaRange);
 
+// PFA-based geo2rdr
+int geo2rdr(const isce3::core::Vec3& inputLLH,
+        const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::core::Orbit& orbit,
+        const isce3::core::EMatrix2D<double, 2, 2>& polarMatrixInv,
+        double aztime, double centerRange, double centerRangeRate, 
+        size_t rangeCenterPixel, size_t azimuthCenterPixel, double rangePixelSpacing,
+        double azimuthPixelSpacing, double& range_distance, double& azimuth_distance);
+
 /**
  * Utility function to compute geographic bounds for a radar grid
  *

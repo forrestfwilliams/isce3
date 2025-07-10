@@ -20,6 +20,7 @@
 // isce3::product
 #include <isce3/product/RadarGridProduct.h>
 #include <isce3/product/RadarGridParameters.h>
+#include <isce3/product/PolarGridParameters.h>
 
 // isce3::geometry
 #include <isce3/geometry/RTC.h>
@@ -35,6 +36,11 @@ enum geocodeOutputMode {
 /** Wrapper function to simplify calling geo2rdr with different grid types */
 static int _geo2rdrGrid(const Vec3&, const Ellipsoid&, const Orbit&, const LUT2d<double>&,
                         double&, double&, const isce3::product::RadarGridParameters&,
+                        double, int, double, bool);
+
+/** Wrapper function to simplify calling geo2rdr with different grid types */
+static int _geo2rdrGrid(const Vec3&, const Ellipsoid&, const Orbit&, const LUT2d<double>&,
+                        double&, double&, const isce3::product::PolarGridParameters&,
                         double, int, double, bool);
 
 template<class T, class T_grid = isce3::product::RadarGridParameters>

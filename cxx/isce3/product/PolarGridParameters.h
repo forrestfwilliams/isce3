@@ -182,6 +182,12 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
             return (sr_dist - 0.5 * _rangePixelSpacing) / _rangePixelSpacing;
         }
 
+        /** Get the polar matrix */
+        inline isce3::core::EMatrix2D<double, 2, 2> polarMatrix() const {return _polarMatrix;}
+
+        /** Get inverse of polar matrix */
+        inline isce3::core::EMatrix2D<double, 2, 2> polarMatrixInv() const {return _polarMatrixInv;}
+
         /** Crop/ Expand while keeping the spacing the same with top left offset and size */
         inline PolarGridParameters offsetAndResize(double yoff, double xoff, size_t ysize, size_t xsize) const
         {

@@ -173,32 +173,34 @@ int _update_aztime(const Orbit& orbit, Vec3 satpos, Vec3 satvel, Vec3 inputXYZ,
 }
 }} // namespace isce3::geometry
 
-// // PFA-based geo2rdr
-// int isce3::geometry::geo2rdr(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
-//         const Orbit& orbit, const isce3::core::EMatrix2D<double, 2, 2>& polarMatrixInv,
-//         double aztime, double centerRange, double& range_distance, double& azimuth_distance)
-// {
-//     Vec3 satpos, satvel, inputXYZ;
-//
-//     // Interpolate the orbit for the (static!!!) azimuth time
-//     orbit.interpolate(&satpos, &satvel, aztime, OrbitInterpBorderMode::FillNaN);
-//
-//     // Convert LLH to XYZ
-//     ellipsoid.lonLatToXyz(inputLLH, inputXYZ);
-//
-//     Vec3 rangeDistance = inputXYZ - satpos;
-//     double range = rangeDistance.norm();
-//     double rangeOffset = range - centerRange;
-//     double rangeRate = (-satvel).dot(rangeDistance) / range;
-//     double rangeRateOffset = rangeRate - centerRangeRate;
-//
-//     range_distance = rangeOffset * polarMatrixInv(0,0) + rangeRateOffset * polarMatrixInv(0,1);
-//     azimuth_distance = rangeOffset * polarMatrixInv(1,0) + rangeRateOffset * polarMatrixInv(1,1);
-//
-//     int converged = 1;
-//     return converged;
-// }
-//
+// PFA-based geo2rdr
+int isce3::geometry::geo2rdr(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const isce3::core::EMatrix2D<double, 2, 2>& polarMatrixInv,
+        double aztime, double centerRange, double centerRangeRate, 
+        size_t rangeCenterPixel, size_t azimuthCenterPixel, double rangePixelSpacing,
+        double azimuthPixelSpacing, double& range_distance, double& azimuth_distance)
+{
+    Vec3 satpos, satvel, inputXYZ;
+
+    // Interpolate the orbit for the (static!!!) azimuth time
+    orbit.interpolate(&satpos, &satvel, aztime, OrbitInterpBorderMode::FillNaN);
+
+    // Convert LLH to XYZ
+    ellipsoid.lonLatToXyz(inputLLH, inputXYZ);
+
+    Vec3 rangeDistance = inputXYZ - satpos;
+    double range = rangeDistance.norm();
+    double rangeOffset = range - centerRange;
+    double rangeRate = (-satvel).dot(rangeDistance) / range;
+    double rangeRateOffset = rangeRate - centerRangeRate;
+
+    range_distance = rangeOffset * polarMatrixInv(0,0) + rangeRateOffset * polarMatrixInv(0,1) + rangeCenterPixel * rangePixelSpacing;
+    azimuth_distance = rangeOffset * polarMatrixInv(1,0) + rangeRateOffset * polarMatrixInv(1,1) + azimuthCenterPixel * azimuthPixelSpacing;
+
+    int converged = 1;
+    return converged;
+}
+
 int isce3::geometry::geo2rdr(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         const Orbit& orbit, const Poly2d& doppler, double& aztime,
         double& slantRange, double wavelength, double startingRange,

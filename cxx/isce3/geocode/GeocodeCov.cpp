@@ -1467,10 +1467,27 @@ static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
     return flag_converged;
 }
 
-// TODO: make a template function
+static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const LUT2d<double>& doppler, double& azdist,
+        double& slantRange, const isce3::product::PolarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge = false)
+{
+    int flag_converged;
+    flag_converged = isce3::geometry::geo2rdr(inputLLH,
+            ellipsoid, orbit, radar_grid.polarMatrixInv(),
+            radar_grid.sensingStart(), radar_grid.centerRange(),
+            radar_grid.centerRangeRate(), 
+            radar_grid.rangeCenterPixel(), radar_grid.azimuthCenterPixel(),
+            radar_grid.rangePixelSpacing(), radar_grid.azimuthPixelSpacing(),
+            azdist, slantRange);
+    return flag_converged;
+}
+
+template<class T_grid>
 static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
-        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
+        double& slantRange, const T_grid& radar_grid,
         const isce3::core::LUT2d<double>& az_time_correction,
         const isce3::core::LUT2d<double>& slant_range_correction,
         double threshold, int maxIter, double deltaRange,
