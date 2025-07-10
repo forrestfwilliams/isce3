@@ -788,11 +788,6 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
             std::min(geogrid.startY(), yf) - margin_y,
             std::max(geogrid.startY(), yf) + margin_y);
 
-    const double start = radar_grid.startingAzimuth();
-    const double pixazm = radar_grid.azimuthPixelSpacing();
-    const double r0 = radar_grid.startingRange();
-    const double dr = radar_grid.rangePixelSpacing();
-
     // Bounds for valid RDC coordinates
     double xbound = radar_grid.width() - 1.0;
     double ybound = radar_grid.length() - 1.0;
@@ -884,8 +879,8 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
             if (!converged)
                 continue;
 
-            float azpix = (a - start) / pixazm;
-            float ranpix = (r - r0) / dr;
+            float azpix = radar_grid.azimuthIndex(a);
+            float ranpix = radar_grid.slantRangeIndex(r);
 
             // Establish bounds for bilinear weighting model
             const int x1 = (int) std::floor(ranpix);
@@ -1066,14 +1061,14 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
             for (size_t j = 0; j < radar_grid.width(); ++j) {
 
                 isce3::core::cartesian_t xyz_plat, vel;
-                double a = start + i * pixazm;
+                double a = radar_grid.azimuth(i);
                 isce3::error::ErrorCode status = orbit.interpolate(
                         &xyz_plat, &vel, a, OrbitInterpBorderMode::FillNaN);
                 if (status != isce3::error::ErrorCode::Success)
                     continue;
 
                 // Slant range for current pixel
-                const double slt_range = r0 + j * dr;
+                const double slt_range = radar_grid.slantRange(j);
 
                 // Get LLH and XYZ coordinates for this azimuth/range
                 isce3::core::cartesian_t targetLLH, targetXYZ;
@@ -1124,8 +1119,7 @@ void _RunBlock(const int jmax, const int block_size,
         const double geogrid_upsampling,
         isce3::core::dataInterpMethod interp_method,
         isce3::io::Raster& dem_raster, isce3::io::Raster* out_geo_rdr,
-        isce3::io::Raster* out_geo_grid, const double start,
-        const double pixazm, const double dr, double r0, int xbound, int ybound,
+        isce3::io::Raster* out_geo_grid, int xbound, int ybound,
         const isce3::product::GeoGridParameters& geogrid,
         const T_grid& radar_grid,
         const isce3::core::LUT2d<double>& dop,
@@ -1345,15 +1339,15 @@ void _RunBlock(const int jmax, const int block_size,
                 continue;
             }
 
-            double y00 = (a00 - start) / pixazm;
-            double y10 = (a10 - start) / pixazm;
-            double y01 = (a01 - start) / pixazm;
-            double y11 = (a11 - start) / pixazm;
+            double y00 = radar_grid.azimuthIndexPoint(a00);
+            double y10 = radar_grid.azimuthIndexPoint(a10);
+            double y01 = radar_grid.azimuthIndexPoint(a01);
+            double y11 = radar_grid.azimuthIndexPoint(a11);
 
-            double x00 = (r00 - r0) / dr;
-            double x10 = (r10 - r0) / dr;
-            double x01 = (r01 - r0) / dr;
-            double x11 = (r11 - r0) / dr;
+            double x00 = radar_grid.slantRangeIndexPoint(r00);
+            double x10 = radar_grid.slantRangeIndexPoint(r10);
+            double x01 = radar_grid.slantRangeIndexPoint(r01);
+            double x11 = radar_grid.slantRangeIndexPoint(r11);
 
             // define slant-range window
             int margin = AREA_PROJECTION_RADAR_GRID_MARGIN;
@@ -1425,8 +1419,8 @@ void _RunBlock(const int jmax, const int block_size,
                 a_c = std::numeric_limits<double>::quiet_NaN();
                 r_c = std::numeric_limits<double>::quiet_NaN();
             }
-            double y_c = (a_c - start) / pixazm;
-            double x_c = (r_c - r0) / dr;
+            double y_c = radar_grid.azimuthIndexPoint(a_c);
+            double x_c = radar_grid.slantRangeIndexPoint(r_c);
 
             if (out_geo_grid != nullptr) {
                 out_geo_grid_a(i, jj) = y_c;
@@ -1673,12 +1667,6 @@ void computeRtcAreaProj(isce3::io::Raster& dem_raster,
          << std::to_string(geogrid.epsg() != dem_raster.getEPSG())
          << pyre::journal::newline;
 
-    // start (az) and r0 at the outer edge of the first pixel:
-    const double pixazm = radar_grid.azimuthPixelSpacing();
-    double start = radar_grid.startingAzimuth() - 0.5 * pixazm;
-    const double dr = radar_grid.rangePixelSpacing();
-    double r0 = radar_grid.startingRange() - 0.5 * dr;
-
     // Bounds for valid RDC coordinates
     int xbound = radar_grid.width() - 1.0;
     int ybound = radar_grid.length() - 1.0;
@@ -1730,7 +1718,7 @@ void computeRtcAreaProj(isce3::io::Raster& dem_raster,
         for (int block = 0; block < nblocks; ++block) {
             _RunBlock(jmax, block_length, block_length_with_upsampling, block,
                 numdone, progress_block, geogrid_upsampling, interp_method,
-                dem_raster, out_geo_rdr, out_geo_grid, start, pixazm, dr, r0,
+                dem_raster, out_geo_rdr, out_geo_grid,
                 xbound, ybound, geogrid, radar_grid, input_dop, ellipsoid,
                 orbit, threshold, num_iter, delta_range, out_gamma_array,
                 out_beta_array, out_sigma_array,
