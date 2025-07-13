@@ -3,6 +3,7 @@
 #include <isce3/core/LUT2d.h>
 
 //isce3::product
+#include <isce3/product/PolarGridParameters.h>
 #include <isce3/product/RadarGridParameters.h>
 #include <isce3/product/GeoGridParameters.h>
 //isce3::geometry
@@ -28,6 +29,13 @@ int rdr2geo_bracketWrapper(
         const isce3::core::Orbit& orbit, const isce3::geometry::DEMInterpolator& demInterp,
         isce3::core::Vec3 &xyz, const isce3::product::RadarGridParameters &radarGrid,
         const double threshold);
+
+int rdr2geo_bracketWrapper(
+        double aztime, double slantRange, double doppler,
+        const isce3::core::Orbit& orbit, const isce3::geometry::DEMInterpolator& demInterp,
+        isce3::core::Vec3 &xyz, const isce3::product::PolarGridParameters &radarGrid,
+        const double threshold);
+
 
 /** Compute the perimeter of a radar grid in map coordinates.
  *

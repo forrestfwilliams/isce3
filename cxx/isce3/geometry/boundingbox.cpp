@@ -41,6 +41,24 @@ int isce3::geometry::rdr2geo_bracketWrapper(
     return converged;
 }
 
+int isce3::geometry::rdr2geo_bracketWrapper(
+        double azdist, double slantRange, double doppler,
+        const isce3::core::Orbit& orbit, const isce3::geometry::DEMInterpolator& demInterp,
+        Vec3 &xyz, const isce3::product::PolarGridParameters &radarGrid,
+        const double threshold)
+{
+    const auto polarMatrix = radarGrid.polarMatrix();
+    double rel_azdist = azdist - (radarGrid.azimuthCenterPixel() * radarGrid.azimuthPixelSpacing());
+    double rel_range = slantRange - (radarGrid.rangeCenterPixel() * radarGrid.rangePixelSpacing());
+    double range = rel_range * polarMatrix(0,0) + rel_azdist * polarMatrix(0, 1);
+    double range_rate = rel_range * polarMatrix(1,0) + rel_azdist * polarMatrix(1, 1);
+    double polar_doppler = -range_rate * 2 / radarGrid.wavelength();
+    const int converged = rdr2geo_bracket(0.0, range, polar_doppler,
+            orbit, demInterp, xyz, 1.0,
+            radarGrid.lookSide(), threshold);
+    return converged;
+}
+
 template<class T_grid>
 isce3::geometry::Perimeter
 isce3::geometry::
