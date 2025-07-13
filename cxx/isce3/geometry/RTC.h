@@ -382,9 +382,8 @@ std::string get_rtc_area_mode_str(rtcAreaMode rtc_area_mode);
 std::string get_rtc_area_beta_mode_str(rtcAreaBetaMode rtc_area_beta_mode);
 std::string get_rtc_algorithm_str(rtcAlgorithm rtc_algorithm);
 
-template<class T_grid>
 void print_parameters(pyre::journal::info_t& channel,
-        const T_grid& radar_grid,
+        isce3::core::LookSide lookside, size_t length, size_t width,
         rtcInputTerrainRadiometry input_terrain_radiometry,
         rtcOutputTerrainRadiometry output_terrain_radiometry,
         rtcAreaMode rtc_area_mode,

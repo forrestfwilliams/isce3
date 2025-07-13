@@ -117,7 +117,23 @@ static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
     return flag_converged;
 }
 
-// TODO: make a template function
+static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const LUT2d<double>& doppler, double& azdist,
+        double& slantRange, const isce3::product::PolarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge = true)
+{
+    int flag_converged;
+    flag_converged = isce3::geometry::geo2rdr(inputLLH,
+            ellipsoid, orbit, radar_grid.polarMatrixInv(),
+            radar_grid.sensingStart(), radar_grid.centerRange(),
+            radar_grid.centerRangeRate(), 
+            radar_grid.rangeCenterPixel(), radar_grid.azimuthCenterPixel(),
+            radar_grid.rangePixelSpacing(), radar_grid.azimuthPixelSpacing(),
+            azdist, slantRange);
+    return flag_converged;
+}
+
 // TODO: this is a direct copy from geocodeCov.cpp - maybe merge?
 template<class T_grid>
 static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
@@ -773,7 +789,7 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
 
     geogrid.print();
     rtcAreaBetaMode rtc_area_beta_mode = rtcAreaBetaMode::PIXEL_AREA;
-    print_parameters(info, radar_grid, input_terrain_radiometry,
+    print_parameters(info, radar_grid.lookSide(), radar_grid.length(), radar_grid.width(), input_terrain_radiometry,
             output_terrain_radiometry, rtc_area_mode, rtc_area_beta_mode,
             upsample_factor, rtc_min_value_db);
 
@@ -1652,7 +1668,7 @@ void computeRtcAreaProj(isce3::io::Raster& dem_raster,
     const isce3::core::Ellipsoid& ellipsoid = proj->ellipsoid();
 
     geogrid.print();
-    print_parameters(info, radar_grid, input_terrain_radiometry,
+    print_parameters(info, radar_grid.lookSide(), radar_grid.length(), radar_grid.width(), input_terrain_radiometry,
             output_terrain_radiometry, rtc_area_mode, rtc_area_beta_mode,
             geogrid_upsampling, rtc_min_value_db);
 
@@ -1886,9 +1902,8 @@ std::string get_rtc_algorithm_str(rtcAlgorithm rtc_algorithm)
     return rtc_algorithm_str;
 }
 
-template<class T_grid>
 void print_parameters(pyre::journal::info_t& channel,
-        const T_grid& radar_grid,
+        isce3::core::LookSide lookside, size_t length, size_t width,
         rtcInputTerrainRadiometry input_terrain_radiometry,
         rtcOutputTerrainRadiometry output_terrain_radiometry,
         rtcAreaMode rtc_area_mode, rtcAreaBetaMode rtc_area_beta_mode,
@@ -1915,10 +1930,10 @@ void print_parameters(pyre::journal::info_t& channel,
             << "RTC area beta mode: "
             << rtc_area_beta_mode_str << pyre::journal::newline
             << "RTC geogrid upsampling: " << geogrid_upsampling
-            << pyre::journal::newline << "look side: " << radar_grid.lookSide()
+            << pyre::journal::newline << "look side: " << lookside
             << pyre::journal::newline
-            << "radar-grid length: " << radar_grid.length()
-            << ", width: " << radar_grid.width() << pyre::journal::newline
+            << "radar-grid length: " << length
+            << ", width: " << width << pyre::journal::newline
             << "RTC min value [dB]: " << rtc_min_value_db
             << pyre::journal::newline << pyre::journal::endl;
 }
