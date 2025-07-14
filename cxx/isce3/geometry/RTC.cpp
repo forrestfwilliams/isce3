@@ -441,7 +441,7 @@ void applyRtc(const T_grid& radar_grid,
 }
 
 double computeUpsamplingFactor(const DEMInterpolator& dem_interp,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const double range_pixel_spacing,
         const isce3::core::Ellipsoid& ellps)
 {
 
@@ -470,7 +470,7 @@ double computeUpsamplingFactor(const DEMInterpolator& dem_interp,
 
     // Compute upsampling factor (for now, just use spacing in range direction)
     const double upsampling_factor =
-            2 * std::max(dx, dy) / radar_grid.rangePixelSpacing();
+            2 * std::max(dx, dy) / range_pixel_spacing;
 
     return upsampling_factor;
 }
@@ -763,9 +763,10 @@ double computeFacet(Vec3 xyz_center, Vec3 xyz_left, Vec3 xyz_right,
     return gamma_naught_area;
 }
 
+template<class T_grid>
 void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
         isce3::io::Raster& output_raster,
-        const isce3::product::RadarGridParameters& radar_grid,
+        const T_grid& radar_grid,
         const isce3::core::Orbit& orbit,
         const isce3::core::LUT2d<double>& input_dop,
         const isce3::product::GeoGridParameters& geogrid,
@@ -837,7 +838,7 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
 
     if (std::isnan(upsample_factor))
         upsample_factor =
-                computeUpsamplingFactor(dem_interp, radar_grid, ellps);
+                computeUpsamplingFactor(dem_interp, radar_grid.rangePixelSpacing(), ellps);
 
     const size_t imax = geogrid.length() * upsample_factor;
     const size_t jmax = geogrid.width() * upsample_factor;
@@ -1954,6 +1955,22 @@ template void applyRtc<isce3::product::RadarGridParameters>(
         isce3::io::Raster*, isce3::io::Raster*,
         isce3::core::MemoryModeBlocksY);
 
+template void applyRtc<isce3::product::PolarGridParameters>(
+        const isce3::product::PolarGridParameters&,
+        const isce3::core::Orbit&,
+        const isce3::core::LUT2d<double>&,
+        isce3::io::Raster&, isce3::io::Raster&,
+        isce3::io::Raster&,
+        rtcInputTerrainRadiometry,
+        rtcOutputTerrainRadiometry, int,
+        rtcAreaMode, rtcAlgorithm, rtcAreaBetaMode,
+        double, float, double, float, float,
+        isce3::io::Raster*,
+        const isce3::core::LUT2d<double>&,
+        const isce3::core::LUT2d<double>&,
+        isce3::io::Raster*, isce3::io::Raster*,
+        isce3::core::MemoryModeBlocksY);
+
 template void isce3::geometry::computeRtc<isce3::product::RadarGridParameters>(
     const isce3::product::RadarGridParameters&,
     const isce3::core::Orbit&,
@@ -1998,4 +2015,28 @@ template void isce3::geometry::computeRtc<isce3::product::RadarGridParameters>(
         isce3::core::dataInterpMethod, double,
         int, double, const long long,
         const long long);
+
+template void isce3::geometry::computeRtc<isce3::product::PolarGridParameters>(
+    const isce3::product::PolarGridParameters&,
+    const isce3::core::Orbit&,
+    const isce3::core::LUT2d<double>&,
+    isce3::io::Raster&,
+    isce3::io::Raster&,
+    isce3::geometry::rtcInputTerrainRadiometry,
+    isce3::geometry::rtcOutputTerrainRadiometry,
+    isce3::geometry::rtcAreaMode,
+    isce3::geometry::rtcAlgorithm,
+    isce3::geometry::rtcAreaBetaMode,
+    double,
+    float,
+    isce3::io::Raster*,
+    const isce3::core::LUT2d<double>&,
+    const isce3::core::LUT2d<double>&,
+    isce3::core::MemoryModeBlocksY,
+    isce3::core::dataInterpMethod,
+    double,
+    int,
+    double,
+    long long,
+    long long);
 }} // namespace isce3::geometry
