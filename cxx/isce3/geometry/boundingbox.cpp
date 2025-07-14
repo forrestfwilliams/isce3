@@ -403,14 +403,15 @@ isce3::geometry::BoundingBox isce3::geometry::getGeoBoundingBoxHeightSearch(
         // only upper height is valid
 
         Vec3 sat_pos_mid, vel_mid, satLLH;
-        double az_time_mid = radarGrid.sensingMid();
+        double az_time_mid = radarGrid.azimuthMid();
         orbit.interpolate(&sat_pos_mid, &vel_mid, az_time_mid,
                           isce3::core::OrbitInterpBorderMode::FillNaN);
 
         const isce3::core::Ellipsoid& ellipsoid = proj->ellipsoid();
         ellipsoid.xyzToLonLat(sat_pos_mid, satLLH);
+        // TODO: is it OK to switch to slant range mid?
         const double new_height =
-                satLLH[2] - radarGrid.startingRange() + height_threshold * 0.5;
+                satLLH[2] - radarGrid.slantRangeMid() + height_threshold * 0.5;
 
         if (new_height > min_height) {
             bbox_min = getGeoBoundingBox(
@@ -680,6 +681,14 @@ template isce3::geometry::BoundingBox isce3::geometry::getGeoBoundingBoxHeightSe
         double, double, const double, const int,
         const double, const double);
 
+template isce3::geometry::BoundingBox isce3::geometry::getGeoBoundingBoxHeightSearch<isce3::product::PolarGridParameters>(
+        const isce3::product::PolarGridParameters&,
+        const isce3::core::Orbit&,
+        const isce3::core::ProjectionBase*,
+        const isce3::core::LUT2d<double>&,
+        double, double, const double, const int,
+        const double, const double);
+
 template isce3::geometry::Perimeter isce3::geometry::getGeoPerimeter<isce3::product::RadarGridParameters>(
     const isce3::product::RadarGridParameters&,
     const isce3::core::Orbit&,
@@ -688,8 +697,23 @@ template isce3::geometry::Perimeter isce3::geometry::getGeoPerimeter<isce3::prod
     const isce3::geometry::DEMInterpolator&,
     int, double);
 
+template isce3::geometry::Perimeter isce3::geometry::getGeoPerimeter<isce3::product::PolarGridParameters>(
+    const isce3::product::PolarGridParameters&,
+    const isce3::core::Orbit&,
+    const isce3::core::ProjectionBase*,
+    const isce3::core::LUT2d<double>&,
+    const isce3::geometry::DEMInterpolator&,
+    int, double);
+
 template isce3::geometry::BoundingBox isce3::geometry::getGeoBoundingBox<isce3::product::RadarGridParameters>(
         const isce3::product::RadarGridParameters&,
+        const isce3::core::Orbit&, const isce3::core::ProjectionBase*,
+        const isce3::core::LUT2d<double>&, 
+        const std::vector<double>&, const double,
+        const int, const double, bool);
+
+template isce3::geometry::BoundingBox isce3::geometry::getGeoBoundingBox<isce3::product::PolarGridParameters>(
+        const isce3::product::PolarGridParameters&,
         const isce3::core::Orbit&, const isce3::core::ProjectionBase*,
         const isce3::core::LUT2d<double>&, 
         const std::vector<double>&, const double,
