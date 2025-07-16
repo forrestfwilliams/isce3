@@ -194,8 +194,11 @@ int isce3::geometry::geo2rdr(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
     double rangeRate = (-satvel).dot(rangeDistance) / range;
     double rangeRateOffset = rangeRate - centerRangeRate;
 
-    range_distance = rangeOffset * polarMatrixInv(0,0) + rangeRateOffset * polarMatrixInv(0,1) + rangeSceneCenter;
-    azimuth_distance = rangeOffset * polarMatrixInv(1,0) + rangeRateOffset * polarMatrixInv(1,1) + azimuthSceneCenter;
+    // range_distance = rangeOffset * polarMatrixInv(0,0) + rangeRateOffset * polarMatrixInv(0,1) + rangeSceneCenter;
+    // azimuth_distance = rangeOffset * polarMatrixInv(1,0) + rangeRateOffset * polarMatrixInv(1,1) + azimuthSceneCenter;
+
+    azimuth_distance = rangeOffset * polarMatrixInv(0,0) + rangeRateOffset * polarMatrixInv(0,1) + rangeSceneCenter;
+    range_distance = rangeOffset * polarMatrixInv(1,0) + rangeRateOffset * polarMatrixInv(1,1) + azimuthSceneCenter;
 
     int converged = 1;
     return converged;

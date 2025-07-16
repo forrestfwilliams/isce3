@@ -121,11 +121,11 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                 py::overload_cast<>(&PolarGridParameters::azimuthSceneCenter, py::const_),
                 py::overload_cast<const double&>(&PolarGridParameters::azimuthSceneCenter))
         .def_property("range_start",
-                py::overload_cast<>(&PolarGridParameters::rangePixelSpacing, py::const_),
-                py::overload_cast<const double&>(&PolarGridParameters::rangePixelSpacing))
+                py::overload_cast<>(&PolarGridParameters::rangeStart, py::const_),
+                py::overload_cast<const double&>(&PolarGridParameters::rangeStart))
         .def_property("azimuth_start",
-                py::overload_cast<>(&PolarGridParameters::azimuthPixelSpacing, py::const_),
-                py::overload_cast<const double&>(&PolarGridParameters::azimuthPixelSpacing))
+                py::overload_cast<>(&PolarGridParameters::azimuthStart, py::const_),
+                py::overload_cast<const double&>(&PolarGridParameters::azimuthStart))
         .def_property("lookside",
                 py::overload_cast<>(&PolarGridParameters::lookSide, py::const_),
                 py::overload_cast<LookSide>(&PolarGridParameters::lookSide))
