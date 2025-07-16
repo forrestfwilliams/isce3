@@ -3620,9 +3620,13 @@ void Geocode<T, T_grid>::_print_parameters(pyre::journal::info_t& channel,
 }
 
 template class Geocode<float>;
+template class Geocode<float, isce3::product::PolarGridParameters>;
 template class Geocode<double>;
+template class Geocode<double, isce3::product::PolarGridParameters>;
 template class Geocode<std::complex<float>>;
+template class Geocode<std::complex<float>, isce3::product::PolarGridParameters>;
 template class Geocode<std::complex<double>>;
+template class Geocode<std::complex<double>, isce3::product::PolarGridParameters>;
 
 
 } // namespace geocode
