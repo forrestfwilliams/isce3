@@ -17,7 +17,7 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
     {
     pyPolarGridParameters
         .def(py::init<double, double, double, double, double, double,
-            double, double, double, double, size_t, size_t, LookSide, size_t, size_t, DateTime>(),
+            double, double, double, double, size_t, size_t, double, double, LookSide, size_t, size_t, DateTime>(),
                 py::arg("sensing_start"),
                 py::arg("wavelength"),
                 py::arg("center_range"),
@@ -30,6 +30,8 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                 py::arg("azimuth_pixel_spacing"),
                 py::arg("range_center_pixel"),
                 py::arg("azimuth_center_pixel"),
+                py::arg("range_start"),
+                py::arg("azimuth_start"),
                 py::arg("lookside"),
                 py::arg("length"),
                 py::arg("width"),
@@ -46,6 +48,8 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                          double azimuth_pixel_spacing,
                          size_t range_center_pixel,
                          size_t azimuth_center_pixel,
+                         double range_start,
+                         double azimuth_start,
                          const std::string& look_side,
                          size_t length,
                          size_t width,
@@ -58,6 +62,7 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                         polar_angle, polar_angle_rate, polar_aperture_scale_factor,
                         polar_aperture_scale_factor_rate, range_pixel_spacing,
                         azimuth_pixel_spacing, range_center_pixel, azimuth_center_pixel,
+                        range_start, azimuth_start,
                         side, length, width, ref_epoch);
                 }),
                 py::arg("sensing_start"),
@@ -72,6 +77,8 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                 py::arg("azimuth_pixel_spacing"),
                 py::arg("range_center_pixel"),
                 py::arg("azimuth_center_pixel"),
+                py::arg("range_start"),
+                py::arg("azimuth_start"),
                 py::arg("look_side"),
                 py::arg("length"),
                 py::arg("width"),
@@ -113,6 +120,12 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
         .def_property("azimuth_center_pixel",
                 py::overload_cast<>(&PolarGridParameters::azimuthCenterPixel, py::const_),
                 py::overload_cast<const size_t&>(&PolarGridParameters::azimuthCenterPixel))
+        .def_property("range_start",
+                py::overload_cast<>(&PolarGridParameters::rangePixelSpacing, py::const_),
+                py::overload_cast<const double&>(&PolarGridParameters::rangePixelSpacing))
+        .def_property("azimuth_start",
+                py::overload_cast<>(&PolarGridParameters::azimuthPixelSpacing, py::const_),
+                py::overload_cast<const double&>(&PolarGridParameters::azimuthPixelSpacing))
         .def_property("lookside",
                 py::overload_cast<>(&PolarGridParameters::lookSide, py::const_),
                 py::overload_cast<LookSide>(&PolarGridParameters::lookSide))
@@ -141,7 +154,8 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                         "polar_angle_rate", "polar_aperture_scale_factor",
                         "polar_aperture_scale_factor_rate", "range_pixel_spacing",
                         "azimuth_pixel_spacing", "range_center_pixel",
-                         "azimuth_center_pixel", "lookside", "length", "width", "ref_epoch"};
+                        "azimuth_center_pixel", "range_start", "azimuth_start",
+                        "lookside", "length", "width", "ref_epoch"};
                 std::string out("PolarGridParameters(");
                 for (auto it = keys.begin(); it != keys.end(); ++it) {
                         auto key = *it;

@@ -34,6 +34,8 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
                                    double azimuthPixelSpacing,
                                    size_t rangeCenterPixel,
                                    size_t azimuthCenterPixel,
+                                   double rangeStart,
+                                   double azimuthStart,
                                    isce3::core::LookSide lookSide,
                                    size_t length,
                                    size_t width,
@@ -186,6 +188,13 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
         
         inline double slantRangeMid() const {return _centerRange;}
 
+
+        inline double rangeStart() const {return _rangeStart;}
+        inline void rangeStart(const double & t) { _rangeStart = t; }
+
+        inline double azimuthStart() const {return _azimuthStart;}
+        inline void azimuthStart(const double & t) { _azimuthStart = t; }
+
         /** Get the polar matrix */
         inline isce3::core::EMatrix2D<double, 2, 2> polarMatrix() const {return _polarMatrix;}
 
@@ -205,8 +214,10 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
                                         polarApertureScaleFactorRate(),
                                         rangePixelSpacing(),
                                         azimuthPixelSpacing(),
-                                        rangeCenterPixel() - xoff,
-                                        azimuthCenterPixel() - yoff,
+                                        rangeCenterPixel() - (xoff / rangePixelSpacing()),
+                                        azimuthCenterPixel() - (yoff / azimuthPixelSpacing()),
+                                        rangeStart(),
+                                        azimuthStart(),
                                         lookSide(),
                                         ysize,
                                         xsize,
@@ -240,11 +251,20 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
                                         azimuthPixelSpacing() / (1.0 * az_upsampling_factor),
                                         rangeCenterPixel() * rg_upsampling_factor,
                                         azimuthCenterPixel() * az_upsampling_factor,
+                                        rangeStart(),
+                                        azimuthStart(),
                                         lookSide(),
                                         length() * az_upsampling_factor,
                                         width() * rg_upsampling_factor,
                                         refEpoch());
         }
+
+
+        /*
+         * Check if given az and slant range are within radargrid
+         */
+        bool contains(const double azdist, const double srange) const;
+
     // Protected data members can be accessed by derived classes
     protected:
         /** Sensing start time */
@@ -283,6 +303,10 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
         /** Center azimuth pixel */
         size_t _azimuthCenterPixel;
 
+        size_t _rangeStart;
+
+        size_t _azimuthStart;
+
         /** Left or right looking geometry indicator */
         isce3::core::LookSide _lookSide;
 
@@ -313,8 +337,9 @@ isce3::product::PolarGridParameters::PolarGridParameters()
       _polarAngle {0}, _polarAngleRate {0},
       _polarApertureScaleFactor {0}, _polarApertureScaleFactorRate {0},
       _rangePixelSpacing {0}, _azimuthPixelSpacing {0},
-      _rangeCenterPixel {0}, _azimuthCenterPixel {0}, _lookSide(isce3::core::LookSide::Left),
-      _rlength {0}, _rwidth {0}, _refEpoch {1} {}
+      _rangeCenterPixel {0}, _azimuthCenterPixel {0},
+      _rangeStart {0}, _azimuthStart {0},
+      _lookSide(isce3::core::LookSide::Left), _rlength {0}, _rwidth {0}, _refEpoch {1} {}
 
 // Copy constructors
 /** @param[in] pgparam PolarGridParameters object */
@@ -332,6 +357,8 @@ PolarGridParameters(const PolarGridParameters & pgparams) :
     _azimuthPixelSpacing(pgparams.azimuthPixelSpacing()),
     _rangeCenterPixel(pgparams.rangeCenterPixel()),
     _azimuthCenterPixel(pgparams.azimuthCenterPixel()),
+    _rangeStart(pgparams.rangeStart()),
+    _azimuthStart(pgparams.azimuthStart()),
     _lookSide(pgparams.lookSide()),
     _rlength(pgparams.length()),
     _rwidth(pgparams.width()),
@@ -354,6 +381,8 @@ operator=(const isce3::product::PolarGridParameters & pgparams) {
     _azimuthPixelSpacing = pgparams.azimuthPixelSpacing();
     _rangeCenterPixel = pgparams.rangeCenterPixel();
     _azimuthCenterPixel = pgparams.azimuthCenterPixel();
+    _rangeStart = pgparams.rangeStart();
+    _azimuthStart = pgparams.azimuthStart();
     _lookSide = pgparams.lookSide();
     _rlength = pgparams.length();
     _rwidth = pgparams.width();
@@ -377,6 +406,8 @@ PolarGridParameters(double sensingStart,
                     double azimuthPixelSpacing,
                     size_t rangeCenterPixel,
                     size_t azimuthCenterPixel,
+                    double rangeStart,
+                    double azimuthStart,
                     isce3::core::LookSide lookSide,
                     size_t length,
                     size_t width,
@@ -393,6 +424,8 @@ PolarGridParameters(double sensingStart,
     _azimuthPixelSpacing(azimuthPixelSpacing),
     _rangeCenterPixel(rangeCenterPixel),
     _azimuthCenterPixel(azimuthCenterPixel),
+    _rangeStart(rangeStart),
+    _azimuthStart(azimuthStart),
     _lookSide(lookSide),
     _rlength(length),
     _rwidth(width),
