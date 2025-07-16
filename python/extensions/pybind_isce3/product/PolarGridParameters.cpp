@@ -17,7 +17,7 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
     {
     pyPolarGridParameters
         .def(py::init<double, double, double, double, double, double,
-            double, double, double, double, size_t, size_t, double, double, LookSide, size_t, size_t, DateTime>(),
+            double, double, double, double, double, double, double, double, LookSide, size_t, size_t, DateTime>(),
                 py::arg("sensing_start"),
                 py::arg("wavelength"),
                 py::arg("center_range"),
@@ -28,8 +28,8 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                 py::arg("polar_aperture_scale_factor_rate"),
                 py::arg("range_pixel_spacing"),
                 py::arg("azimuth_pixel_spacing"),
-                py::arg("range_center_pixel"),
-                py::arg("azimuth_center_pixel"),
+                py::arg("range_scene_center"),
+                py::arg("azimuth_scene_center"),
                 py::arg("range_start"),
                 py::arg("azimuth_start"),
                 py::arg("lookside"),
@@ -46,8 +46,8 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                          double polar_aperture_scale_factor_rate,
                          double range_pixel_spacing,
                          double azimuth_pixel_spacing,
-                         size_t range_center_pixel,
-                         size_t azimuth_center_pixel,
+                         double range_scene_center,
+                         double azimuth_scene_center,
                          double range_start,
                          double azimuth_start,
                          const std::string& look_side,
@@ -61,7 +61,7 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                         sensing_start, wavelength, center_range, center_range_rate,
                         polar_angle, polar_angle_rate, polar_aperture_scale_factor,
                         polar_aperture_scale_factor_rate, range_pixel_spacing,
-                        azimuth_pixel_spacing, range_center_pixel, azimuth_center_pixel,
+                        azimuth_pixel_spacing, range_scene_center, azimuth_scene_center,
                         range_start, azimuth_start,
                         side, length, width, ref_epoch);
                 }),
@@ -75,8 +75,8 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                 py::arg("polar_aperture_scale_factor_rate"),
                 py::arg("range_pixel_spacing"),
                 py::arg("azimuth_pixel_spacing"),
-                py::arg("range_center_pixel"),
-                py::arg("azimuth_center_pixel"),
+                py::arg("range_scene_center"),
+                py::arg("azimuth_scene_center"),
                 py::arg("range_start"),
                 py::arg("azimuth_start"),
                 py::arg("look_side"),
@@ -114,12 +114,12 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
         .def_property("azimuth_pixel_spacing",
                 py::overload_cast<>(&PolarGridParameters::azimuthPixelSpacing, py::const_),
                 py::overload_cast<const double&>(&PolarGridParameters::azimuthPixelSpacing))
-        .def_property("range_center_pixel",
-                py::overload_cast<>(&PolarGridParameters::rangeCenterPixel, py::const_),
-                py::overload_cast<const size_t&>(&PolarGridParameters::rangeCenterPixel))
-        .def_property("azimuth_center_pixel",
-                py::overload_cast<>(&PolarGridParameters::azimuthCenterPixel, py::const_),
-                py::overload_cast<const size_t&>(&PolarGridParameters::azimuthCenterPixel))
+        .def_property("range_scene_center",
+                py::overload_cast<>(&PolarGridParameters::rangeSceneCenter, py::const_),
+                py::overload_cast<const double&>(&PolarGridParameters::rangeSceneCenter))
+        .def_property("azimuth_scene_center",
+                py::overload_cast<>(&PolarGridParameters::azimuthSceneCenter, py::const_),
+                py::overload_cast<const double&>(&PolarGridParameters::azimuthSceneCenter))
         .def_property("range_start",
                 py::overload_cast<>(&PolarGridParameters::rangePixelSpacing, py::const_),
                 py::overload_cast<const double&>(&PolarGridParameters::rangePixelSpacing))
@@ -153,8 +153,8 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                         "center_range", "center_range_rate", "polar_angle",
                         "polar_angle_rate", "polar_aperture_scale_factor",
                         "polar_aperture_scale_factor_rate", "range_pixel_spacing",
-                        "azimuth_pixel_spacing", "range_center_pixel",
-                        "azimuth_center_pixel", "range_start", "azimuth_start",
+                        "azimuth_pixel_spacing", "range_scene_center",
+                        "azimuth_scene_center", "range_start", "azimuth_start",
                         "lookside", "length", "width", "ref_epoch"};
                 std::string out("PolarGridParameters(");
                 for (auto it = keys.begin(); it != keys.end(); ++it) {

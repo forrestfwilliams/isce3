@@ -128,7 +128,7 @@ static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
             ellipsoid, orbit, radar_grid.polarMatrixInv(),
             radar_grid.sensingStart(), radar_grid.centerRange(),
             radar_grid.centerRangeRate(), 
-            radar_grid.rangeCenterPixel(), radar_grid.azimuthCenterPixel(),
+            radar_grid.rangeSceneCenter(), radar_grid.azimuthSceneCenter(),
             radar_grid.rangePixelSpacing(), radar_grid.azimuthPixelSpacing(),
             azdist, slantRange);
     return flag_converged;

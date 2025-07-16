@@ -190,7 +190,7 @@ int geo2rdr(const isce3::core::Vec3& inputLLH,
         const isce3::core::Orbit& orbit,
         const isce3::core::EMatrix2D<double, 2, 2>& polarMatrixInv,
         double aztime, double centerRange, double centerRangeRate, 
-        size_t rangeCenterPixel, size_t azimuthCenterPixel, double rangePixelSpacing,
+        double rangeSceneCenter, double azimuthSceneCenter, double rangePixelSpacing,
         double azimuthPixelSpacing, double& range_distance, double& azimuth_distance);
 
 /**

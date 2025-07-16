@@ -48,8 +48,8 @@ int isce3::geometry::rdr2geo_bracketWrapper(
         const double threshold)
 {
     const auto polarMatrix = radarGrid.polarMatrix();
-    double rel_azdist = azdist - (radarGrid.azimuthCenterPixel() * radarGrid.azimuthPixelSpacing());
-    double rel_range = slantRange - (radarGrid.rangeCenterPixel() * radarGrid.rangePixelSpacing());
+    double rel_azdist = azdist - radarGrid.azimuthSceneCenter();
+    double rel_range = slantRange - radarGrid.rangeSceneCenter();
     double range = rel_range * polarMatrix(0,0) + rel_azdist * polarMatrix(0, 1);
     double range_rate = rel_range * polarMatrix(1,0) + rel_azdist * polarMatrix(1, 1);
     double polar_doppler = -range_rate * 2 / radarGrid.wavelength();

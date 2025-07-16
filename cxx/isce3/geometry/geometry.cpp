@@ -177,7 +177,7 @@ int _update_aztime(const Orbit& orbit, Vec3 satpos, Vec3 satvel, Vec3 inputXYZ,
 int isce3::geometry::geo2rdr(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         const Orbit& orbit, const isce3::core::EMatrix2D<double, 2, 2>& polarMatrixInv,
         double aztime, double centerRange, double centerRangeRate, 
-        size_t rangeCenterPixel, size_t azimuthCenterPixel, double rangePixelSpacing,
+        double rangeSceneCenter, double azimuthSceneCenter, double rangePixelSpacing,
         double azimuthPixelSpacing, double& range_distance, double& azimuth_distance)
 {
     Vec3 satpos, satvel, inputXYZ;
@@ -194,8 +194,8 @@ int isce3::geometry::geo2rdr(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
     double rangeRate = (-satvel).dot(rangeDistance) / range;
     double rangeRateOffset = rangeRate - centerRangeRate;
 
-    range_distance = rangeOffset * polarMatrixInv(0,0) + rangeRateOffset * polarMatrixInv(0,1) + rangeCenterPixel * rangePixelSpacing;
-    azimuth_distance = rangeOffset * polarMatrixInv(1,0) + rangeRateOffset * polarMatrixInv(1,1) + azimuthCenterPixel * azimuthPixelSpacing;
+    range_distance = rangeOffset * polarMatrixInv(0,0) + rangeRateOffset * polarMatrixInv(0,1) + rangeSceneCenter;
+    azimuth_distance = rangeOffset * polarMatrixInv(1,0) + rangeRateOffset * polarMatrixInv(1,1) + azimuthSceneCenter;
 
     int converged = 1;
     return converged;

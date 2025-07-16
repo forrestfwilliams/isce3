@@ -32,8 +32,8 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
                                    double polarApertureScaleFactorRate,
                                    double rangePixelSpacing,
                                    double azimuthPixelSpacing,
-                                   size_t rangeCenterPixel,
-                                   size_t azimuthCenterPixel,
+                                   double rangeSceneCenter,
+                                   double azimuthSceneCenter,
                                    double rangeStart,
                                    double azimuthStart,
                                    isce3::core::LookSide lookSide,
@@ -109,16 +109,16 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
         inline void azimuthPixelSpacing(const double & t) { _azimuthPixelSpacing = t; }
 
         /** Get center range pixel */
-        inline size_t rangeCenterPixel() const { return _rangeCenterPixel; }
+        inline double rangeSceneCenter() const { return _rangeSceneCenter; }
 
         /** Set center range pixel */
-        inline void rangeCenterPixel(const size_t & t) { _rangeCenterPixel = t; }
+        inline void rangeSceneCenter(const double & t) { _rangeSceneCenter = t; }
 
         /** Get center azimuth pixel */
-        inline size_t azimuthCenterPixel() const { return _azimuthCenterPixel; }
+        inline double azimuthSceneCenter() const { return _azimuthSceneCenter; }
 
         /** Set center azimuth pixel */
-        inline void azimuthCenterPixel(const size_t & t) { _azimuthCenterPixel = t; }
+        inline void azimuthSceneCenter(const double & t) { _azimuthSceneCenter = t; }
 
         /** Get the look direction */
         inline isce3::core::LookSide lookSide() const { return _lookSide; }
@@ -154,36 +154,36 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
 
         /** Get azimuth distance for a fractional line index */
         inline double azimuth(double line) const {
-            return line * _azimuthPixelSpacing;
+            return _azimuthStart + line * _azimuthPixelSpacing;
         }
 
         /** Get fractional line index for an azimuth distance */
         inline double azimuthIndex(double az_dist) const {
-            return az_dist  / _azimuthPixelSpacing;
+            return (az_dist - _azimuthStart) / _azimuthPixelSpacing;
         }
 
         /** Get fractional line index for an azimuth distance
          * assuming you start from the outer edge */
         inline double azimuthIndexPoint(double az_dist) const {
-            return (az_dist - 0.5 * _azimuthPixelSpacing) / _azimuthPixelSpacing;
+            return (az_dist - (_azimuthStart + 0.5 * _azimuthPixelSpacing)) / _azimuthPixelSpacing;
         }
 
-        inline double azimuthMid() const {return _azimuthCenterPixel * _azimuthPixelSpacing;}
+        inline double azimuthMid() const {return _azimuthSceneCenter;}
 
         /** Get range distance for a fractional range index */
         inline double slantRange(double slant_range) const {
-            return slant_range * _rangePixelSpacing;
+            return _rangeStart + slant_range * _rangePixelSpacing;
         }
 
         /** Get fractional range index for a range distance */
         inline double slantRangeIndex(double sr_dist) const {
-            return sr_dist  / _rangePixelSpacing;
+            return (sr_dist - _rangeStart) / _rangePixelSpacing;
         }
 
         /** Get fractional range index for a range distance
          * assuming you start from the outer edge */
         inline double slantRangeIndexPoint(double sr_dist) const {
-            return (sr_dist - 0.5 * _rangePixelSpacing) / _rangePixelSpacing;
+            return (sr_dist - (_rangeStart + 0.5 * _rangePixelSpacing)) / _rangePixelSpacing;
         }
         
         inline double slantRangeMid() const {return _centerRange;}
@@ -214,10 +214,10 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
                                         polarApertureScaleFactorRate(),
                                         rangePixelSpacing(),
                                         azimuthPixelSpacing(),
-                                        rangeCenterPixel() - (xoff / rangePixelSpacing()),
-                                        azimuthCenterPixel() - (yoff / azimuthPixelSpacing()),
-                                        rangeStart(),
-                                        azimuthStart(),
+                                        rangeSceneCenter() - xoff,
+                                        azimuthSceneCenter() - yoff,
+                                        rangeStart() + xoff,
+                                        azimuthStart() + yoff,
                                         lookSide(),
                                         ysize,
                                         xsize,
@@ -249,8 +249,8 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
                                         polarApertureScaleFactorRate(),
                                         rangePixelSpacing() / (1.0 * rg_upsampling_factor),
                                         azimuthPixelSpacing() / (1.0 * az_upsampling_factor),
-                                        rangeCenterPixel() * rg_upsampling_factor,
-                                        azimuthCenterPixel() * az_upsampling_factor,
+                                        rangeSceneCenter(),
+                                        azimuthSceneCenter(),
                                         rangeStart(),
                                         azimuthStart(),
                                         lookSide(),
@@ -298,14 +298,14 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
         double _azimuthPixelSpacing;
 
         /** Center range pixel */
-        size_t _rangeCenterPixel;
+        double _rangeSceneCenter;
 
         /** Center azimuth pixel */
-        size_t _azimuthCenterPixel;
+        double _azimuthSceneCenter;
 
-        size_t _rangeStart;
+        double _rangeStart;
 
-        size_t _azimuthStart;
+        double _azimuthStart;
 
         /** Left or right looking geometry indicator */
         isce3::core::LookSide _lookSide;
@@ -337,7 +337,7 @@ isce3::product::PolarGridParameters::PolarGridParameters()
       _polarAngle {0}, _polarAngleRate {0},
       _polarApertureScaleFactor {0}, _polarApertureScaleFactorRate {0},
       _rangePixelSpacing {0}, _azimuthPixelSpacing {0},
-      _rangeCenterPixel {0}, _azimuthCenterPixel {0},
+      _rangeSceneCenter {0}, _azimuthSceneCenter {0},
       _rangeStart {0}, _azimuthStart {0},
       _lookSide(isce3::core::LookSide::Left), _rlength {0}, _rwidth {0}, _refEpoch {1} {}
 
@@ -355,8 +355,8 @@ PolarGridParameters(const PolarGridParameters & pgparams) :
     _polarApertureScaleFactorRate(pgparams.polarApertureScaleFactorRate()),
     _rangePixelSpacing(pgparams.rangePixelSpacing()),
     _azimuthPixelSpacing(pgparams.azimuthPixelSpacing()),
-    _rangeCenterPixel(pgparams.rangeCenterPixel()),
-    _azimuthCenterPixel(pgparams.azimuthCenterPixel()),
+    _rangeSceneCenter(pgparams.rangeSceneCenter()),
+    _azimuthSceneCenter(pgparams.azimuthSceneCenter()),
     _rangeStart(pgparams.rangeStart()),
     _azimuthStart(pgparams.azimuthStart()),
     _lookSide(pgparams.lookSide()),
@@ -379,8 +379,8 @@ operator=(const isce3::product::PolarGridParameters & pgparams) {
     _polarApertureScaleFactorRate = pgparams.polarApertureScaleFactorRate();
     _rangePixelSpacing = pgparams.rangePixelSpacing();
     _azimuthPixelSpacing = pgparams.azimuthPixelSpacing();
-    _rangeCenterPixel = pgparams.rangeCenterPixel();
-    _azimuthCenterPixel = pgparams.azimuthCenterPixel();
+    _rangeSceneCenter = pgparams.rangeSceneCenter();
+    _azimuthSceneCenter = pgparams.azimuthSceneCenter();
     _rangeStart = pgparams.rangeStart();
     _azimuthStart = pgparams.azimuthStart();
     _lookSide = pgparams.lookSide();
@@ -404,8 +404,8 @@ PolarGridParameters(double sensingStart,
                     double polarApertureScaleFactorRate,
                     double rangePixelSpacing,
                     double azimuthPixelSpacing,
-                    size_t rangeCenterPixel,
-                    size_t azimuthCenterPixel,
+                    double rangeSceneCenter,
+                    double azimuthSceneCenter,
                     double rangeStart,
                     double azimuthStart,
                     isce3::core::LookSide lookSide,
@@ -422,8 +422,8 @@ PolarGridParameters(double sensingStart,
     _polarApertureScaleFactorRate(polarApertureScaleFactorRate),
     _rangePixelSpacing(rangePixelSpacing),
     _azimuthPixelSpacing(azimuthPixelSpacing),
-    _rangeCenterPixel(rangeCenterPixel),
-    _azimuthCenterPixel(azimuthCenterPixel),
+    _rangeSceneCenter(rangeSceneCenter),
+    _azimuthSceneCenter(azimuthSceneCenter),
     _rangeStart(rangeStart),
     _azimuthStart(azimuthStart),
     _lookSide(lookSide),
