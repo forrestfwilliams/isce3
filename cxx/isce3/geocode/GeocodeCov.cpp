@@ -1480,7 +1480,7 @@ static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
             radar_grid.centerRangeRate(), 
             radar_grid.rangeSceneCenter(), radar_grid.azimuthSceneCenter(),
             radar_grid.rangePixelSpacing(), radar_grid.azimuthPixelSpacing(),
-            azdist, slantRange);
+            slantRange, azdist);
     return flag_converged;
 }
 
