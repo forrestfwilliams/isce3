@@ -1223,7 +1223,7 @@ int Geocode<T, T_grid>::_geo2rdr(const T_grid& radar_grid,
     dem_value = llh[2];
 
     // Perform geo->rdr iterations
-    int converged = _geo2rdrGrid(llh, _ellipsoid, _orbit, _doppler,
+    int converged = isce3::geometry::geo2rdrGrid(llh, _ellipsoid, _orbit, _doppler,
             azimuthTime, slantRange, radar_grid, _threshold,
             _numiter, 1.0e-8, false);
 
@@ -1441,49 +1441,6 @@ void _getUpsampledBlock(
     }
 }
 
-static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
-        const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
-        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
-        double threshold, int maxIter, double deltaRange,
-        bool flag_edge = true)
-{
-    int flag_converged;
-    for (int i = 0; i <= static_cast<int>(flag_edge); ++i) {
-        /*
-          Run geo2rdr twice for border edge pixels. This is
-          required because initial guesses (a11 and r11)
-          are not as good for edge elements. Without it,
-          the edge solutions are slightly different than the
-          corresponding solutions from single-block processing.
-       */
-       flag_converged = isce3::geometry::geo2rdr(inputLLH, ellipsoid, orbit,
-                doppler, aztime, slantRange, radar_grid.wavelength(),
-                radar_grid.lookSide(), threshold, maxIter, deltaRange);
-
-       if (!flag_converged) {
-            return flag_converged;
-       }
-    }
-    return flag_converged;
-}
-
-static int _geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
-        const Orbit& orbit, const LUT2d<double>& doppler, double& azdist,
-        double& slantRange, const isce3::product::PolarGridParameters& radar_grid,
-        double threshold, int maxIter, double deltaRange,
-        bool flag_edge = true)
-{
-    int flag_converged;
-    flag_converged = isce3::geometry::geo2rdr(inputLLH,
-            ellipsoid, orbit, radar_grid.polarMatrixInv(),
-            radar_grid.sensingStart(), radar_grid.centerRange(),
-            radar_grid.centerRangeRate(), 
-            radar_grid.rangeSceneCenter(), radar_grid.azimuthSceneCenter(),
-            radar_grid.rangePixelSpacing(), radar_grid.azimuthPixelSpacing(),
-            slantRange, azdist);
-    return flag_converged;
-}
-
 template<class T_grid>
 static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
@@ -1493,7 +1450,7 @@ static int _geo2rdrWrapper(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         double threshold, int maxIter, double deltaRange,
         bool flag_edge = true)
 {
-    int flag_converged = _geo2rdrGrid(inputLLH, ellipsoid, orbit, doppler,
+    int flag_converged = isce3::geometry::geo2rdrGrid(inputLLH, ellipsoid, orbit, doppler,
             aztime, slantRange, radar_grid, threshold, maxIter, deltaRange, flag_edge);
     if (!flag_converged) {
         return flag_converged;
@@ -1677,7 +1634,7 @@ bool Geocode<T, T_grid>::_checkLoadEntireRslcCorners(const double y0, const doub
         // dem_pos_vect = {x, y, z}
         Vec3 dem_pos_vect = getDemCoords(dem_x, dem_y, dem_interp, proj);
 
-        const int converged = _geo2rdrGrid(
+        const int converged = isce3::geometry::geo2rdrGrid(
                 dem_interp.proj()->inverse(dem_pos_vect), _ellipsoid, _orbit, _doppler,
                 az_value, range_value, radar_grid, _threshold, _numiter, 1.0e-8); 
 

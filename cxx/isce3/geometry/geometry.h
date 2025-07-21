@@ -189,7 +189,7 @@ int geo2rdr(const isce3::core::Vec3& inputLLH,
         const isce3::core::Ellipsoid& ellipsoid,
         const isce3::core::Orbit& orbit,
         const isce3::core::EMatrix2D<double, 2, 2>& polarMatrixInv,
-        double aztime, double centerRange, double centerRangeRate, 
+        double aztime, double centerRange, double centerRangeRate,
         double rangeSceneCenter, double azimuthSceneCenter, double rangePixelSpacing,
         double azimuthPixelSpacing, double& range_distance, double& azimuth_distance);
 
@@ -413,6 +413,18 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lookIncAngFromSlantRange(
  * @return mean height in (m).
  */
 double compute_mean_dem(const DEMInterpolator& dem);
+
+int geo2rdrGrid(const isce3::core::Vec3& inputLLH, const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::core::Orbit& orbit, const isce3::core::LUT2d<double>& doppler, double& aztime,
+        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge = true);
+
+int geo2rdrGrid(const isce3::core::Vec3& inputLLH, const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::core::Orbit& orbit, const isce3::core::LUT2d<double>& doppler, double& azdist,
+        double& slantRange, const isce3::product::PolarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge = true);
 
 } // namespace geometry
 } // namespace isce3

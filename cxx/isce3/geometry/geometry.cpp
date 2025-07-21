@@ -27,6 +27,7 @@
 #include <isce3/except/Error.h>
 #include <isce3/geometry/DEMInterpolator.h>
 #include <isce3/product/RadarGridParameters.h>
+#include <isce3/product/PolarGridParameters.h>
 
 #include "detail/Geo2Rdr.h"
 #include "detail/Rdr2Geo.h"
@@ -278,6 +279,50 @@ int isce3::geometry::geo2rdr(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
     auto status = detail::geo2rdr(&aztime, &slantRange, inputLLH, ellipsoid,
             orbit, doppler, wavelength, side, t0, params);
     return (status == ErrorCode::Success);
+}
+
+
+int isce3::geometry::geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
+        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge)
+{
+    int flag_converged;
+    for (int i = 0; i <= static_cast<int>(flag_edge); ++i) {
+        /*
+          Run geo2rdr twice for border edge pixels. This is
+          required because initial guesses (a11 and r11)
+          are not as good for edge elements. Without it,
+          the edge solutions are slightly different than the
+          corresponding solutions from single-block processing.
+       */
+       flag_converged = isce3::geometry::geo2rdr(inputLLH, ellipsoid, orbit,
+                doppler, aztime, slantRange, radar_grid.wavelength(),
+                radar_grid.lookSide(), threshold, maxIter, deltaRange);
+
+       if (!flag_converged) {
+            return flag_converged;
+       }
+    }
+    return flag_converged;
+}
+
+int isce3::geometry::geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const LUT2d<double>& doppler, double& azdist,
+        double& slantRange, const isce3::product::PolarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge)
+{
+    int flag_converged;
+    flag_converged = isce3::geometry::geo2rdr(inputLLH,
+            ellipsoid, orbit, radar_grid.polarMatrixInv(),
+            radar_grid.sensingStart(), radar_grid.centerRange(),
+            radar_grid.centerRangeRate(), 
+            radar_grid.rangeSceneCenter(), radar_grid.azimuthSceneCenter(),
+            radar_grid.rangePixelSpacing(), radar_grid.azimuthPixelSpacing(),
+            slantRange, azdist);
+    return flag_converged;
 }
 
 // Utility function to compute geographic bounds for a radar grid
