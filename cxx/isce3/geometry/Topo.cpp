@@ -31,8 +31,9 @@ using isce3::core::Pixel;
 using isce3::core::Vec3;
 using isce3::io::Raster;
 
-isce3::geometry::Topo::
-Topo(const isce3::product::RadarGridProduct & product,
+namespace isce3 { namespace geometry {
+template<typename T_grid>
+Topo<T_grid>::Topo(const isce3::product::RadarGridProduct & product,
      char frequency,
      bool nativeDoppler)
 :
@@ -53,8 +54,9 @@ Topo(const isce3::product::RadarGridProduct & product,
 }
 
 // Main topo driver; internally create topo rasters
+template<typename T_grid>
 template<typename T>
-void isce3::geometry::Topo::_topo(T& dem, const std::string& outdir) {
+void Topo<T_grid>::_topo(T& dem, const std::string& outdir) {
     { // Topo scope for creating output rasters
         // Initialize a TopoLayers object to handle block data and raster data
         // Create rasters for individual layers (provide output raster sizes)
@@ -91,8 +93,9 @@ void isce3::geometry::Topo::_topo(T& dem, const std::string& outdir) {
 }
 
 // Run topo with externally created topo rasters
+template<typename T_grid>
 template<typename T>
-void isce3::geometry::Topo::_topo(T& dem, Raster* xRaster, Raster* yRaster,
+void Topo<T_grid>::_topo(T& dem, Raster* xRaster, Raster* yRaster,
                                  Raster* heightRaster, Raster* incRaster,
                                  Raster* hdgRaster, Raster* localIncRaster,
                                  Raster* localPsiRaster, Raster* simRaster,
@@ -114,7 +117,8 @@ void isce3::geometry::Topo::_topo(T& dem, Raster* xRaster, Raster* yRaster,
     topo(dem, layers);
 }
 
-void isce3::geometry::Topo::
+template<typename T_grid>
+void Topo<T_grid>::
 topo(Raster & demRaster, TopoLayers & layers)
 {
     // Create reusable pyre::journal channels
@@ -256,7 +260,8 @@ topo(Raster & demRaster, TopoLayers & layers)
          << pyre::journal::newline;
 }
 
-void isce3::geometry::Topo::topo(DEMInterpolator& demInterp,
+template<typename T_grid>
+void Topo<T_grid>::topo(DEMInterpolator& demInterp,
                                 TopoLayers& layers) {
     // Create reusable pyre::journal channels
     pyre::journal::warning_t warning("isce.geometry.Topo");
@@ -391,14 +396,14 @@ void isce3::geometry::Topo::topo(DEMInterpolator& demInterp,
          << pyre::journal::newline;
 }
 
-
-void isce3::geometry::Topo::topo(Raster& demRaster,
+template<typename T_grid>
+void Topo<T_grid>::topo(Raster& demRaster,
                                  const std::string& outdir) {
     _topo(demRaster, outdir);
 }
 
-
-void isce3::geometry::Topo::topo(
+template<typename T_grid>
+void Topo<T_grid>::topo(
         Raster& demRaster, Raster* xRaster, Raster* yRaster,
         Raster* heightRaster, Raster* incRaster, Raster* hdgRaster,
         Raster* localIncRaster, Raster* localPsiRaster, Raster* simRaster,
@@ -409,12 +414,14 @@ void isce3::geometry::Topo::topo(
           groundToSatEastRaster, groundToSatNorthRaster);
 }
 
-void isce3::geometry::Topo::topo(isce3::geometry::DEMInterpolator& demInterp,
+template<typename T_grid>
+void Topo<T_grid>::topo(isce3::geometry::DEMInterpolator& demInterp,
                                 const std::string& outdir) {
     _topo(demInterp, outdir);
 }
 
-void isce3::geometry::Topo::topo(
+template<typename T_grid>
+void Topo<T_grid>::topo(
         isce3::geometry::DEMInterpolator& demInterp, Raster* xRaster,
         Raster* yRaster, Raster* heightRaster,
         Raster* incRaster, Raster* hdgRaster,
@@ -427,7 +434,8 @@ void isce3::geometry::Topo::topo(
           groundToSatEastRaster, groundToSatNorthRaster);
 }
 
-void isce3::geometry::Topo::
+template<typename T_grid>
+void Topo<T_grid>::
 _initAzimuthLine(size_t line, double& tline, Vec3& pos, Vec3& vel, Basis& TCNbasis)
 {
     // Get satellite azimuth time
@@ -442,7 +450,8 @@ _initAzimuthLine(size_t line, double& tline, Vec3& pos, Vec3& vel, Basis& TCNbas
 }
 
 // Get DEM bounds using first/last azimuth line and slant range bin
-void isce3::geometry::Topo::
+template<typename T_grid>
+void Topo<T_grid>::
 computeDEMBounds(Raster & demRaster, DEMInterpolator & demInterp, size_t lineOffset,
                  size_t blockLength)
 {
@@ -599,7 +608,8 @@ computeDEMBounds(Raster & demRaster, DEMInterpolator & demInterp, size_t lineOff
     demInterp.declare();
 }
 
-void isce3::geometry::Topo::
+template<typename T_grid>
+void Topo<T_grid>::
 _setOutputTopoLayers(Vec3 & targetLLH, TopoLayers & layers, size_t line,
                      Pixel & pixel, Vec3& pos, Vec3& vel, Basis & TCNbasis,
                      DEMInterpolator & demInterp)
@@ -749,8 +759,8 @@ _setOutputTopoLayers(Vec3 & targetLLH, TopoLayers & layers, size_t line,
     layers.localPsi(line, bin, std::acos(cospsi) * degrees);
 }
 
-
-void isce3::geometry::Topo::
+template<typename T_grid>
+void Topo<T_grid>::
 setLayoverShadow(TopoLayers& layers, DEMInterpolator& demInterp,
                  std::vector<Vec3>& satPosition, size_t block,
                  size_t n_blocks)
@@ -959,4 +969,5 @@ setLayoverShadow(TopoLayers& layers, DEMInterpolator& demInterp,
     printf("\rLayover/shadow mask progress (block %d/%d): 100%%\n",
         (int) block + 1, (int) n_blocks), fflush(stdout);
 }
-
+template class Topo<>;
+}}

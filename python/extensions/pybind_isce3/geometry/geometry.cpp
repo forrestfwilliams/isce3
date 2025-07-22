@@ -24,7 +24,7 @@ void addsubmodule_geometry(py::module & m)
         pyDEMInterpolator(geometry, "DEMInterpolator");
     py::class_<isce3::geometry::Geo2rdr>
         pyGeo2Rdr(geometry, "Geo2Rdr");
-    py::class_<isce3::geometry::Topo>
+    py::class_<isce3::geometry::Topo<>>
         pyRdr2Geo(geometry, "Rdr2Geo");
     py::class_<isce3::geometry::RadarGridBoundingBox>
         pyRadarGridBoundingBox(geometry, "RadarGridBoundingBox");

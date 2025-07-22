@@ -159,11 +159,11 @@ void addbinding_rdr2geo(py::module& m)
         )");
 }
 
-void addbinding(py::class_<Topo>& pyRdr2Geo)
+template<typename T_grid>
+void addbinding(py::class_<Topo<T_grid>>& pyRdr2Geo)
 {
     pyRdr2Geo
-            .def(py::init([](const isce3::product::RadarGridParameters&
-                                          radar_grid,
+            .def(py::init([](const T_grid& radar_grid,
                                   const isce3::core::Orbit& orbit,
                                   const isce3::core::Ellipsoid& ellipsoid,
                                   const isce3::core::LUT2d<double>& doppler,
@@ -193,7 +193,7 @@ void addbinding(py::class_<Topo>& pyRdr2Geo)
                     py::arg("lines_per_block") = 1000)
             .def("topo",
                     py::overload_cast<isce3::io::Raster&, const std::string&>(
-                            &Topo::topo),
+                            &Topo<T_grid>::topo),
                     py::arg("dem_raster"), py::arg("outdir"))
             .def("topo",
                     py::overload_cast<isce3::io::Raster&, isce3::io::Raster*,
@@ -202,7 +202,7 @@ void addbinding(py::class_<Topo>& pyRdr2Geo)
                             isce3::io::Raster*, isce3::io::Raster*,
                             isce3::io::Raster*, isce3::io::Raster*,
                             isce3::io::Raster*, isce3::io::Raster*>(
-                            &Topo::topo),
+                            &Topo<T_grid>::topo),
                     py::arg("dem_raster"), py::arg("x_raster") = nullptr,
                     py::arg("y_raster") = nullptr,
                     py::arg("height_raster") = nullptr,
@@ -248,29 +248,31 @@ void addbinding(py::class_<Topo>& pyRdr2Geo)
         ground_to_sat_north_raster: isce3.io.Raster
             Output raster for north component of ground to satellite unit vector
                     )")
-            .def_property_readonly("orbit", &Topo::orbit)
-            .def_property_readonly("ellipsoid", &Topo::ellipsoid)
-            .def_property_readonly("doppler", &Topo::doppler)
-            .def_property_readonly("radar_grid", &Topo::radarGridParameters)
+            .def_property_readonly("orbit", &Topo<T_grid>::orbit)
+            .def_property_readonly("ellipsoid", &Topo<T_grid>::ellipsoid)
+            .def_property_readonly("doppler", &Topo<T_grid>::doppler)
+            .def_property_readonly("radar_grid", &Topo<T_grid>::radarGridParameters)
             .def_property("threshold",
-                    py::overload_cast<>(&Topo::threshold, py::const_),
-                    py::overload_cast<double>(&Topo::threshold))
+                    py::overload_cast<>(&Topo<T_grid>::threshold, py::const_),
+                    py::overload_cast<double>(&Topo<T_grid>::threshold))
             .def_property("numiter",
-                    py::overload_cast<>(&Topo::numiter, py::const_),
-                    py::overload_cast<int>(&Topo::numiter))
+                    py::overload_cast<>(&Topo<T_grid>::numiter, py::const_),
+                    py::overload_cast<int>(&Topo<T_grid>::numiter))
             .def_property("extraiter",
-                    py::overload_cast<>(&Topo::extraiter, py::const_),
-                    py::overload_cast<int>(&Topo::extraiter))
+                    py::overload_cast<>(&Topo<T_grid>::extraiter, py::const_),
+                    py::overload_cast<int>(&Topo<T_grid>::extraiter))
             .def_property("dem_interp_method",
-                    py::overload_cast<>(&Topo::demMethod, py::const_),
-                    py::overload_cast<dataInterpMethod>(&Topo::demMethod))
+                    py::overload_cast<>(&Topo<T_grid>::demMethod, py::const_),
+                    py::overload_cast<dataInterpMethod>(&Topo<T_grid>::demMethod))
             .def_property("epsg_out",
-                    py::overload_cast<>(&Topo::epsgOut, py::const_),
-                    py::overload_cast<int>(&Topo::epsgOut))
+                    py::overload_cast<>(&Topo<T_grid>::epsgOut, py::const_),
+                    py::overload_cast<int>(&Topo<T_grid>::epsgOut))
             .def_property("compute_mask",
-                    py::overload_cast<>(&Topo::computeMask, py::const_),
-                    py::overload_cast<bool>(&Topo::computeMask))
+                    py::overload_cast<>(&Topo<T_grid>::computeMask, py::const_),
+                    py::overload_cast<bool>(&Topo<T_grid>::computeMask))
             .def_property("lines_per_block",
-                    py::overload_cast<>(&Topo::linesPerBlock, py::const_),
-                    py::overload_cast<size_t>(&Topo::linesPerBlock));
+                    py::overload_cast<>(&Topo<T_grid>::linesPerBlock, py::const_),
+                    py::overload_cast<size_t>(&Topo<T_grid>::linesPerBlock));
 }
+
+template void addbinding(py::class_<Topo<>>&);
