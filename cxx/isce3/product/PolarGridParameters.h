@@ -191,6 +191,9 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
 
         inline double rangeStart() const {return _rangeStart;}
         inline void rangeStart(const double & t) { _rangeStart = t; }
+        inline double startingRange() const {return _rangeStart;}
+        inline double endingRange() const {return _rangeStart + (_rwidth * _rangePixelSpacing);}
+        inline double midRange() const {return (endingRange() - startingRange()) / 2.0;}
 
         inline double azimuthStart() const {return _azimuthStart;}
         inline void azimuthStart(const double & t) { _azimuthStart = t; }

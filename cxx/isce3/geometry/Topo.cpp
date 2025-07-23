@@ -158,7 +158,7 @@ topo(Raster & demRaster, TopoLayers & layers)
         }
 
         // Diagnostics
-        const double tblock = _radarGrid.sensingTime(lineStart);
+        const double tblock = _radarGrid.azimuth(lineStart);
         info << "Processing block: " << block + 1 << " " << pyre::journal::newline
              << "  - line start: " << lineStart << pyre::journal::newline
              << "  - line end  : " << lineStart + blockLength << pyre::journal::newline
@@ -294,7 +294,7 @@ void Topo<T_grid>::topo(DEMInterpolator& demInterp,
         }
 
         // Diagnostics
-        const double tblock = _radarGrid.sensingTime(lineStart);
+        const double tblock = _radarGrid.azimuth(lineStart);
         info << "Processing block: " << block + 1 << " " << pyre::journal::newline
              << "  - line start: " << lineStart << pyre::journal::newline
              << "  - line end  : " << lineStart + blockLength
@@ -439,7 +439,7 @@ void Topo<T_grid>::
 _initAzimuthLine(size_t line, double& tline, Vec3& pos, Vec3& vel, Basis& TCNbasis)
 {
     // Get satellite azimuth time
-    tline = _radarGrid.sensingTime(line);
+    tline = _radarGrid.azimuth(line);
 
     // Get state vector
     _orbit.interpolate(&pos, &vel, tline,

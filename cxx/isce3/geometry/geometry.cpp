@@ -325,6 +325,42 @@ int isce3::geometry::geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoi
     return flag_converged;
 }
 
+int isce3::geometry::rdr2geoGrid(double aztime, double slantRange, double doppler,
+        const Orbit& orbit, const Ellipsoid& ellipsoid,
+        const isce3::product::RadarGridParameters &radarGrid,
+        const DEMInterpolator& demInterp, Vec3& targetLLH,
+        double threshold, int maxIter, int extraIter)
+{
+    double h0 = targetLLH[2];
+    detail::Rdr2GeoParams params = {threshold, maxIter, extraIter};
+    auto status = detail::rdr2geo(&targetLLH, aztime, slantRange, doppler,
+            orbit, demInterp, ellipsoid, radarGrid.wavelength(),
+            radarGrid.lookSide(), h0, params);
+    return (status == ErrorCode::Success);
+}
+
+int isce3::geometry::rdr2geoGrid(double azdist, double slantRange, double doppler,
+        const Orbit& orbit, const Ellipsoid& ellipsoid,
+        const isce3::product::PolarGridParameters &radarGrid,
+        const DEMInterpolator& demInterp, Vec3& targetLLH,
+        double threshold, int maxIter, int extraIter)
+{
+    double h0 = targetLLH[2];
+    detail::Rdr2GeoParams params = {threshold, maxIter, extraIter};
+
+    const auto polarMatrix = radarGrid.polarMatrix();
+    double rel_azdist = azdist - radarGrid.azimuthSceneCenter();
+    double rel_range = slantRange - radarGrid.rangeSceneCenter();
+    double range = rel_range * polarMatrix(0,0) + rel_azdist * polarMatrix(0, 1);
+    double range_rate = rel_range * polarMatrix(1,0) + rel_azdist * polarMatrix(1, 1);
+    double polar_doppler = -range_rate * 2 / radarGrid.wavelength();
+
+    auto status = detail::rdr2geo(&targetLLH, 0.0, slantRange, polar_doppler,
+            orbit, demInterp, ellipsoid, 1.0,
+            radarGrid.lookSide(), h0, params);
+    return (status == ErrorCode::Success);
+}
+
 // Utility function to compute geographic bounds for a radar grid
 void isce3::geometry::computeDEMBounds(const Orbit& orbit,
         const Ellipsoid& ellipsoid, const LUT2d<double>& doppler,

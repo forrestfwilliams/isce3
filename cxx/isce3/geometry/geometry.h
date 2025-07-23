@@ -426,5 +426,16 @@ int geo2rdrGrid(const isce3::core::Vec3& inputLLH, const isce3::core::Ellipsoid&
         double threshold, int maxIter, double deltaRange,
         bool flag_edge = true);
 
+int rdr2geoGrid(double aztime, double slantRange, double doppler,
+        const isce3::core::Orbit& orbit, const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::product::RadarGridParameters &radarGrid,
+        const isce3::geometry::DEMInterpolator& demInterp, isce3::core::Vec3& targetLLH,
+        double threshold, int maxIter, int extraIter);
+
+int rdr2geoGrid(double azdist, double slantRange, double doppler,
+        const isce3::core::Orbit& orbit, const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::product::PolarGridParameters &radarGrid,
+        const isce3::geometry::DEMInterpolator& demInterp, isce3::core::Vec3& targetLLH,
+        double threshold, int maxIter, int extraIter);
 } // namespace geometry
 } // namespace isce3
