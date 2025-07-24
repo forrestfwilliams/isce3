@@ -325,17 +325,16 @@ int isce3::geometry::geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoi
     return flag_converged;
 }
 
-int isce3::geometry::rdr2geoGrid(double aztime, double slantRange, double doppler,
-        const Orbit& orbit, const Ellipsoid& ellipsoid,
-        const isce3::product::RadarGridParameters &radarGrid,
+int isce3::geometry::rdr2geoGrid(const Pixel& pixel, const Basis& TCNbasis,
+        const Vec3& pos, const Vec3& vel, const Ellipsoid& ellipsoid,
         const DEMInterpolator& demInterp, Vec3& targetLLH,
+        const isce3::product::RadarGridParameters radarGrid,
         double threshold, int maxIter, int extraIter)
 {
     double h0 = targetLLH[2];
     detail::Rdr2GeoParams params = {threshold, maxIter, extraIter};
-    auto status = detail::rdr2geo(&targetLLH, aztime, slantRange, doppler,
-            orbit, demInterp, ellipsoid, radarGrid.wavelength(),
-            radarGrid.lookSide(), h0, params);
+    auto status = detail::rdr2geo(&targetLLH, pixel, TCNbasis, pos, vel,
+            demInterp, ellipsoid, radarGrid.lookSide(), h0, params);
     return (status == ErrorCode::Success);
 }
 

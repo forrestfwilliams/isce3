@@ -355,8 +355,23 @@ private:
      */
     void _initAzimuthLine(size_t line, double&,
                           isce3::core::Vec3& pos, isce3::core::Vec3& vel,
-                          isce3::core::Basis& TCNbasis);
+                          isce3::core::Basis& TCNbasis,
+                          const isce3::product::RadarGridParameters& radar_grid);
 
+    void _initAzimuthLine(size_t line, double&,
+                          isce3::core::Vec3& pos, isce3::core::Vec3& vel,
+                          isce3::core::Basis& TCNbasis,
+                          const isce3::product::PolarGridParameters& radar_grid);
+
+    void _initRangePixel(double& rng, isce3::core::Pixel& pixel,
+                        size_t rbin, const double tline, 
+                        const isce3::core::Vec3 vel,
+                        isce3::product::RadarGridParameters radarGrid);
+
+    void _initRangePixel(double& rng, isce3::core::Pixel& pixel,
+                        size_t rbin, const double tline, 
+                        const isce3::core::Vec3 vel,
+                        isce3::product::PolarGridParameters radarGrid);
     /**
      * Write to output layers
      *

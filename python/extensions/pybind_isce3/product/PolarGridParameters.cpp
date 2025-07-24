@@ -141,6 +141,7 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
         .def("copy", [](const PolarGridParameters& self) {
                 return PolarGridParameters(self);
         })
+        .def("doppler", &PolarGridParameters::doppler, py::arg("azdist"), py::arg("srange"))
         .def_property_readonly("shape", [](const PolarGridParameters& self) {
                 auto shape = py::tuple(2);
                 shape[0] = self.length();

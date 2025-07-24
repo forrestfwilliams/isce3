@@ -432,6 +432,15 @@ int rdr2geoGrid(double aztime, double slantRange, double doppler,
         const isce3::geometry::DEMInterpolator& demInterp, isce3::core::Vec3& targetLLH,
         double threshold, int maxIter, int extraIter);
 
+int rdr2geoGrid(const isce3::core::Pixel& pixel,
+        const isce3::core::Basis& TCNbasis,
+        const isce3::core::Vec3& pos, const isce3::core::Vec3& vel, 
+        const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::geometry::DEMInterpolator& demInterp,
+        isce3::core::Vec3& targetLLH,
+        const isce3::product::RadarGridParameters radarGrid,
+        double threshold, int maxIter, int extraIter);
+
 int rdr2geoGrid(double azdist, double slantRange, double doppler,
         const isce3::core::Orbit& orbit, const isce3::core::Ellipsoid& ellipsoid,
         const isce3::product::PolarGridParameters &radarGrid,

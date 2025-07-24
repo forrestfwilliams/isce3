@@ -17,6 +17,8 @@
 #include <isce3/core/DenseMatrix.h>
 #include <isce3/core/Utilities.h>
 
+#include <isce3/product/RadarGridParameters.h>
+#include <isce3/product/PolarGridParameters.h>
 #include <isce3/product/RadarGridProduct.h>
 
 // isce3::geometry
@@ -199,26 +201,16 @@ topo(Raster & demRaster, TopoLayers & layers)
             // Initialize orbital data for this azimuth line
             Basis TCNbasis;
             Vec3 pos, vel;
-            _initAzimuthLine(line, tline, pos, vel, TCNbasis);
-
+            _initAzimuthLine(line, tline, pos, vel, TCNbasis, _radarGrid);
             satPosition[blockLine] = pos;
-
-            // Compute velocity magnitude
-            const double satVmag = vel.norm();
 
             // For each slant range bin
             #pragma omp parallel for reduction(+:totalconv)
             for (size_t rbin = 0; rbin < _radarGrid.width(); ++rbin) {
 
-                // Get current slant range
-                const double rng = _radarGrid.slantRange(rbin);
-
-                // Get current Doppler value
-                const double dopfact = (0.5 * _radarGrid.wavelength()
-                                     * (_doppler.eval(tline, rng) / satVmag)) * rng;
-
-                // Store slant range bin data in Pixel
-                Pixel pixel(rng, dopfact, rbin);
+                double rng;
+                Pixel pixel;
+                _initRangePixel(rng, pixel, rbin, tline, vel, _radarGrid);
 
                 // Initialize LLH to middle of input DEM and average height
                 Vec3 llh = demInterp.midLonLat();
@@ -333,26 +325,16 @@ void Topo<T_grid>::topo(DEMInterpolator& demInterp,
             Basis TCNbasis;
             Vec3 pos, vel;
 
-            _initAzimuthLine(line, tline, pos, vel, TCNbasis);
+            _initAzimuthLine(line, tline, pos, vel, TCNbasis, _radarGrid);
             satPosition[blockLine] = pos;
-
-            // Compute velocity magnitude
-            const double satVmag = vel.norm();
 
             // For each slant range bin
             #pragma omp parallel for reduction(+ : totalconv)
             for (size_t rbin = 0; rbin < _radarGrid.width(); ++rbin) {
 
-                // Get current slant range
-                const double rng = _radarGrid.slantRange(rbin);
-
-                // Get current Doppler value
-                const double dopfact = (0.5 * _radarGrid.wavelength() *
-                                        (_doppler.eval(tline, rng) / satVmag)) *
-                                       rng;
-
-                // Store slant range bin data in Pixel
-                Pixel pixel(rng, dopfact, rbin);
+                double rng;
+                Pixel pixel;
+                _initRangePixel(rng, pixel, rbin, tline, vel, _radarGrid);
 
                 // Initialize LLH to middle of input DEM and average height
                 Vec3 llh = demInterp.midLonLat();
@@ -436,7 +418,8 @@ void Topo<T_grid>::topo(
 
 template<typename T_grid>
 void Topo<T_grid>::
-_initAzimuthLine(size_t line, double& tline, Vec3& pos, Vec3& vel, Basis& TCNbasis)
+_initAzimuthLine(size_t line, double& tline, Vec3& pos, Vec3& vel, Basis& TCNbasis,
+                 const isce3::product::RadarGridParameters& radar_grid)
 {
     // Get satellite azimuth time
     tline = _radarGrid.azimuth(line);
@@ -447,6 +430,56 @@ _initAzimuthLine(size_t line, double& tline, Vec3& pos, Vec3& vel, Basis& TCNbas
 
     // Get geocentric TCN basis using satellite basis
     TCNbasis = Basis(pos, vel);
+}
+
+template<typename T_grid>
+void Topo<T_grid>::
+_initAzimuthLine(size_t line, double& tline, Vec3& pos, Vec3& vel, Basis& TCNbasis,
+                 const isce3::product::PolarGridParameters& radar_grid)
+{
+    // Get satellite azimuth time
+    tline = _radarGrid.azimuth(line);
+
+    // Get state vector
+    _orbit.interpolate(&pos, &vel, radar_grid.azimuthStart(),
+                       isce3::core::OrbitInterpBorderMode::FillNaN);
+
+    // Get geocentric TCN basis using satellite basis
+    TCNbasis = Basis(pos, vel);
+}
+
+template<typename T_grid>
+void Topo<T_grid>::
+_initRangePixel(double& rng, Pixel& pixel,
+                const size_t rbin, const double tline, const Vec3 vel,
+                const isce3::product::RadarGridParameters radarGrid)
+{
+    rng = _radarGrid.slantRange(rbin);
+    const double satVmag = vel.norm();
+    // Get current Doppler value
+    const double dopfact = (0.5 * radarGrid.wavelength()
+                            * (_doppler.eval(tline, rng) / satVmag)) * rng;
+    // Store slant range bin data in Pixel
+    pixel.range(rng);
+    pixel.dopfact(dopfact);
+    pixel.bin(rbin);
+}
+
+template<typename T_grid>
+void Topo<T_grid>::
+_initRangePixel(double& rng, Pixel& pixel,
+                const size_t rbin, const double tline, const Vec3 vel,
+                const isce3::product::PolarGridParameters radarGrid)
+{
+    rng = _radarGrid.slantRange(rbin);
+    // Get current Doppler value
+    const double satVmag = vel.norm();
+    const double dopfact = (0.5 * 1.0
+                            * (_doppler.eval(tline, rng) / satVmag)) * rng;
+    // Store slant range bin data in Pixel
+    pixel.range(rng);
+    pixel.dopfact(dopfact);
+    pixel.bin(rbin);
 }
 
 // Get DEM bounds using first/last azimuth line and slant range bin
@@ -515,18 +548,15 @@ computeDEMBounds(Raster & demRaster, DEMInterpolator & demInterp, size_t lineOff
          // Initialize orbit data for this azimuth line
         Vec3 pos, vel;
         Basis TCNbasis;
-        _initAzimuthLine(lineIndex, tline, pos, vel, TCNbasis);
+        _initAzimuthLine(lineIndex, tline, pos, vel, TCNbasis, _radarGrid);
         // Compute satellite velocity and height
-        const double satVmag = vel.norm();
         const Vec3 satLLH = _ellipsoid.xyzToLonLat(pos);
 
         // Get proper slant range and Doppler factor
         const size_t rbin = rgInd[i];
-        double rng = _radarGrid.slantRange(rbin);
-        double dopfact = (0.5 * _radarGrid.wavelength() * (_doppler.eval(tline, rng)
-                        / satVmag)) * rng;
-        // Store in Pixel object
-        Pixel pixel(rng, dopfact, rbin);
+        double rng;
+        Pixel pixel;
+        _initRangePixel(rng, pixel, rbin, tline, vel, _radarGrid);
 
         // Run topo for one iteration for two different heights
         Vec3 llh {0., 0., 0.};
