@@ -21,6 +21,13 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
         /** Default constructor */
         inline PolarGridParameters();
 
+        PolarGridParameters(const isce3::product::RadarGridProduct & product,
+                            char frequency = 'A');
+
+        /** Constructor from an isce3::core::Metadata object. */
+        inline PolarGridParameters(const isce3::core::Metadata & meta,
+                                   const isce3::core::DateTime & refEpoch);
+
         /** Constructor from individual components and values. */
         inline PolarGridParameters(double sensingStart,
                                    double wavelength,
@@ -495,6 +502,15 @@ validate() const
     {
         throw isce3::except::InvalidArgument(ISCE_SRCINFO(), errstr);
     }
+}
+
+// TODO: this is a placeholder for now
+isce3::product::PolarGridParameters::
+PolarGridParameters(const isce3::core::Metadata & meta,
+                    const isce3::core::DateTime & refEpoch) :
+    PolarGridParameters()
+{
+    validate();
 }
 
 

@@ -454,7 +454,7 @@ _initRangePixel(double& rng, Pixel& pixel,
                 const size_t rbin, const double tline, const Vec3 vel,
                 const isce3::product::RadarGridParameters radarGrid)
 {
-    rng = _radarGrid.slantRange(rbin);
+    rng = radarGrid.slantRange(rbin);
     const double satVmag = vel.norm();
     // Get current Doppler value
     const double dopfact = (0.5 * radarGrid.wavelength()
@@ -471,11 +471,13 @@ _initRangePixel(double& rng, Pixel& pixel,
                 const size_t rbin, const double tline, const Vec3 vel,
                 const isce3::product::PolarGridParameters radarGrid)
 {
-    rng = _radarGrid.slantRange(rbin);
+    const auto polarMatrix = radarGrid.polarMatrix();
+    double rng_dist = radarGrid.slantRange(rbin);
+    rng = (rng_dist - radarGrid.rangeSceneCenter()) * polarMatrix(0,0) + (tline - radarGrid.azimuthSceneCenter()) * polarMatrix(0,1) + radarGrid.centerRange();
     // Get current Doppler value
     const double satVmag = vel.norm();
     const double dopfact = (0.5 * 1.0
-                            * (_doppler.eval(tline, rng) / satVmag)) * rng;
+                            * (_doppler.eval(tline, rng_dist) / satVmag)) * rng;
     // Store slant range bin data in Pixel
     pixel.range(rng);
     pixel.dopfact(dopfact);
@@ -1000,4 +1002,5 @@ setLayoverShadow(TopoLayers& layers, DEMInterpolator& demInterp,
         (int) block + 1, (int) n_blocks), fflush(stdout);
 }
 template class Topo<>;
+template class Topo<isce3::product::PolarGridParameters>;
 }}

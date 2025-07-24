@@ -1,5 +1,16 @@
 #include "PolarGridParameters.h"
+#include "RadarGridProduct.h"
 
+#include <isce3/core/Metadata.h>
+#include <isce3/core/DateTime.h>
+
+// TODO: this is a placeholder for now
+isce3::product::PolarGridParameters::
+PolarGridParameters(const RadarGridProduct & product, char frequency) :
+    PolarGridParameters()
+{
+    validate();
+}
 
 bool isce3::product::PolarGridParameters::
 contains(const double azdist, const double srange) const {

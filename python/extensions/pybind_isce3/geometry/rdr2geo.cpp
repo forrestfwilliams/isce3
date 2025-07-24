@@ -19,6 +19,7 @@
 #include <isce3/geometry/geometry.h>
 #include <isce3/io/Raster.h>
 #include <isce3/product/RadarGridParameters.h>
+#include <isce3/product/PolarGridParameters.h>
 
 using isce3::geometry::DEMInterpolator;
 using isce3::geometry::Topo;
@@ -275,4 +276,5 @@ void addbinding(py::class_<Topo<T_grid>>& pyRdr2Geo)
                     py::overload_cast<size_t>(&Topo<T_grid>::linesPerBlock));
 }
 
-template void addbinding(py::class_<Topo<>>&);
+template void addbinding(py::class_<Topo<isce3::product::RadarGridParameters>>&);
+template void addbinding(py::class_<Topo<isce3::product::PolarGridParameters>>&);

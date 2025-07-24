@@ -12,6 +12,7 @@
 #include "ltpcoordinates.h"
 #include "pntintersect.h"
 #include "lookIncFromSr.h"
+#include <isce3/product/PolarGridParameters.h>
 
 namespace py = pybind11;
 
@@ -26,6 +27,8 @@ void addsubmodule_geometry(py::module & m)
         pyGeo2Rdr(geometry, "Geo2Rdr");
     py::class_<isce3::geometry::Topo<>>
         pyRdr2Geo(geometry, "Rdr2Geo");
+    py::class_<isce3::geometry::Topo<isce3::product::PolarGridParameters>>
+        pyRdr2GeoPolar(geometry, "Rdr2GeoPolar");
     py::class_<isce3::geometry::RadarGridBoundingBox>
         pyRadarGridBoundingBox(geometry, "RadarGridBoundingBox");
     py::class_<isce3::geometry::detail::Geo2RdrParams>
@@ -49,6 +52,7 @@ void addsubmodule_geometry(py::module & m)
     addbinding(pyDEMInterpolator);
     addbinding(pyGeo2Rdr);
     addbinding(pyRdr2Geo);
+    addbinding(pyRdr2GeoPolar);
     addbinding(pyInputTerrainRadiometry);
     addbinding(pyOutputTerrainRadiometry);
     addbinding(pyRtcAlgorithm);
