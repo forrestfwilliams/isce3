@@ -275,9 +275,8 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
          */
         bool contains(const double azdist, const double srange) const;
 
-        /*
-         * Calculate the doppler for a given azimuth/range location
-         */
+        void rangeRangeRate(double &rng, double &rngrate, const double azdist, const double rngdist) const;
+
         double doppler(const double azdist, const double srange) const;
 
     // Protected data members can be accessed by derived classes

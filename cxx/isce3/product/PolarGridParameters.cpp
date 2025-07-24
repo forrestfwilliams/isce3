@@ -1,6 +1,7 @@
 #include "PolarGridParameters.h"
 #include "RadarGridProduct.h"
 
+#include <isce3/core/Vector.h>
 #include <isce3/core/Metadata.h>
 #include <isce3/core/DateTime.h>
 
@@ -24,11 +25,18 @@ contains(const double azdist, const double srange) const {
             and srange <= endingRange + halfRangePixelSpacing;
 }
 
+void isce3::product::PolarGridParameters::
+rangeRangeRate(double &rng, double &rngrate, const double azdist, const double rngdist) const {
+    Eigen::Vector2d distInfo(rngdist - _rangeSceneCenter, azdist - _azimuthSceneCenter);
+    Eigen::Vector2d rangeInfo = _polarMatrix * distInfo;
+    rng = rangeInfo(0) + _centerRange;
+    rngrate = rangeInfo(1) + _centerRangeRate;
+}
+
 double isce3::product::PolarGridParameters::
 doppler(const double azdist, const double srange) const {
-    double rel_azdist = azdist - _azimuthSceneCenter;
-    double rel_range = srange - _rangeSceneCenter;
-    double range_rate = rel_range * _polarMatrix(1,0) + rel_azdist * _polarMatrix(1, 1);
-    double doppler = -range_rate * 2 / _wavelength;
+    double rng, rngrate;
+    rangeRangeRate(rng, rngrate, azdist, srange);
+    double doppler = -rngrate * 2 / 1.0;
     return doppler;
 }

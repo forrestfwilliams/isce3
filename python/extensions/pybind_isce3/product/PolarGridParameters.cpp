@@ -142,6 +142,15 @@ void addbinding(pybind11::class_<PolarGridParameters> & pyPolarGridParameters)
                 return PolarGridParameters(self);
         })
         .def("doppler", &PolarGridParameters::doppler, py::arg("azdist"), py::arg("srange"))
+        // .def("range_range_rate", &PolarGridParameters::doppler, py::arg("azdist"), py::arg("srange"))
+        .def("range_range_rate", [](const isce3::product::PolarGridParameters& self,
+                                    double azdist, double rngdist) {
+                double rng = 0.0;
+                double rngrate = 0.0;
+                self.rangeRangeRate(rng, rngrate, azdist, rngdist);
+                return std::make_tuple(rng, rngrate);
+            },
+        py::arg("azdist"), py::arg("rngdist"))
         .def_property_readonly("shape", [](const PolarGridParameters& self) {
                 auto shape = py::tuple(2);
                 shape[0] = self.length();

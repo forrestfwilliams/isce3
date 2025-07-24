@@ -471,9 +471,9 @@ _initRangePixel(double& rng, Pixel& pixel,
                 const size_t rbin, const double tline, const Vec3 vel,
                 const isce3::product::PolarGridParameters radarGrid)
 {
-    const auto polarMatrix = radarGrid.polarMatrix();
     double rng_dist = radarGrid.slantRange(rbin);
-    rng = (rng_dist - radarGrid.rangeSceneCenter()) * polarMatrix(0,0) + (tline - radarGrid.azimuthSceneCenter()) * polarMatrix(0,1) + radarGrid.centerRange();
+    double rngrate;
+    radarGrid.rangeRangeRate(rng, rngrate, tline, rng_dist);
     // Get current Doppler value
     const double satVmag = vel.norm();
     const double dopfact = (0.5 * 1.0
