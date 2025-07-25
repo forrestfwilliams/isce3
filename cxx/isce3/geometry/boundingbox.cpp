@@ -47,13 +47,9 @@ int isce3::geometry::rdr2geo_bracketWrapper(
         Vec3 &xyz, const isce3::product::PolarGridParameters &radarGrid,
         const double threshold)
 {
-    const auto polarMatrix = radarGrid.polarMatrix();
-    double rel_azdist = azdist - radarGrid.azimuthSceneCenter();
-    double rel_range = slantRange - radarGrid.rangeSceneCenter();
-    double range = rel_range * polarMatrix(0,0) + rel_azdist * polarMatrix(0, 1);
-    double range_rate = rel_range * polarMatrix(1,0) + rel_azdist * polarMatrix(1, 1);
-    double polar_doppler = -range_rate * 2 / radarGrid.wavelength();
-    const int converged = rdr2geo_bracket(0.0, range, polar_doppler,
+    double rng, rngrate;
+    radarGrid.rangeRangeRate(rng, rngrate, azdist, slantRange);
+    const int converged = rdr2geo_bracket(0.0, rng, doppler,
             orbit, demInterp, xyz, 1.0,
             radarGrid.lookSide(), threshold);
     return converged;

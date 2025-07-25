@@ -81,7 +81,8 @@ void GeoGridParameters::print() const
     info << ret_str << pyre::journal::endl;
 }
 
-GeoGridParameters bbox2GeoGrid(const RadarGridParameters& radar_grid,
+template<typename T_grid>
+GeoGridParameters bbox2GeoGrid(const T_grid& radar_grid,
                                const isce3::core::Orbit& orbit,
                                const isce3::core::LUT2d<double>& doppler,
                                double spacing_x, double spacing_y, int epsg,
@@ -120,8 +121,9 @@ GeoGridParameters bbox2GeoGrid(const RadarGridParameters& radar_grid,
     return GeoGridParameters(start_x, start_y, spacing_x, spacing_y, width, length, epsg);
 }
 
+template<typename T_grid>
 GeoGridParameters bbox2GeoGridScaled(
-        const RadarGridParameters& radar_grid, const isce3::core::Orbit& orbit,
+        const T_grid& radar_grid, const isce3::core::Orbit& orbit,
         const isce3::core::LUT2d<double>& doppler,
         const isce3::io::Raster& dem_raster, double spacing_scale, 
         double min_height, double max_height, const double margin,
@@ -143,4 +145,38 @@ GeoGridParameters bbox2GeoGridScaled(
                         spacing_y, epsg, min_height, max_height, margin,
                         pointsPerEdge, threshold, height_threshold);
 }
+
+template GeoGridParameters bbox2GeoGrid<isce3::product::RadarGridParameters>(
+    const isce3::product::RadarGridParameters& radar_grid,
+    const isce3::core::Orbit& orbit,
+    const isce3::core::LUT2d<double>& doppler, double spacing_x,
+    double spacing_y, int epsg, double min_height, double max_height,
+    const double margin, const int pointsPerEdge, const double threshold,
+    const double height_threshold);
+
+template GeoGridParameters bbox2GeoGrid<isce3::product::PolarGridParameters>(
+    const isce3::product::PolarGridParameters& radar_grid,
+    const isce3::core::Orbit& orbit,
+    const isce3::core::LUT2d<double>& doppler, double spacing_x,
+    double spacing_y, int epsg, double min_height, double max_height,
+    const double margin, const int pointsPerEdge, const double threshold,
+    const double height_threshold);
+
+template GeoGridParameters bbox2GeoGridScaled<isce3::product::RadarGridParameters>(
+    const isce3::product::RadarGridParameters& radar_grid,
+    const isce3::core::Orbit& orbit,
+    const isce3::core::LUT2d<double>& doppler,
+    const isce3::io::Raster& dem_raster, double spacing_scale,
+    double min_height, double max_height, const double margin,
+    const int pointsPerEdge, const double threshold,
+    const double height_threshold);
+
+template GeoGridParameters bbox2GeoGridScaled<isce3::product::PolarGridParameters>(
+    const isce3::product::PolarGridParameters& radar_grid,
+    const isce3::core::Orbit& orbit,
+    const isce3::core::LUT2d<double>& doppler,
+    const isce3::io::Raster& dem_raster, double spacing_scale,
+    double min_height, double max_height, const double margin,
+    const int pointsPerEdge, const double threshold,
+    const double height_threshold);
 }}

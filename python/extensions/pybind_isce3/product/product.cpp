@@ -35,5 +35,8 @@ void addsubmodule_product(py::module & m)
     addbinding(pySwath);
     addbinding(pyGrid);
     addbinding(pyGeoGridProduct);
-    addbinding_bbox_to_geogrid(m_product);
+    // addbinding_bbox_to_geogrid<(m_product);
+    addbinding_bbox_to_geogrid<isce3::product::RadarGridParameters>(m_product);
+    addbinding_bbox_to_geogrid<isce3::product::PolarGridParameters>(m_product);
+    // addbinding_bbox_to_geogrid(m_product);
 }

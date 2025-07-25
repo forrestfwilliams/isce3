@@ -5,6 +5,7 @@
 #include <isce3/core/Orbit.h>
 #include <isce3/io/Raster.h>
 #include <isce3/product/RadarGridParameters.h>
+#include <isce3/product/PolarGridParameters.h>
 
 using isce3::product::GeoGridParameters;
 
@@ -94,10 +95,11 @@ void addbinding(py::class_<GeoGridParameters> & pyGeoGridParams)
             });
 }
 
+template<typename T_grid>
 void addbinding_bbox_to_geogrid(py::module & m)
 {
     m.def("bbox_to_geogrid_scaled",
-            &isce3::product::bbox2GeoGridScaled,
+            &isce3::product::bbox2GeoGridScaled<T_grid>,
             py::arg("radar_grid"),
             py::arg("orbit"),
             py::arg("doppler"),
@@ -126,7 +128,7 @@ void addbinding_bbox_to_geogrid(py::module & m)
         height_threshold    Height threshold for convergence.
             )")
     .def("bbox_to_geogrid",
-            &isce3::product::bbox2GeoGrid,
+            &isce3::product::bbox2GeoGrid<T_grid>,
             py::arg("radar_grid"),
             py::arg("orbit"),
             py::arg("doppler"),
@@ -157,3 +159,5 @@ void addbinding_bbox_to_geogrid(py::module & m)
         height_threshold    Height threshold for convergence.
         )");
 }
+template void addbinding_bbox_to_geogrid<isce3::product::RadarGridParameters>(py::module &);
+template void addbinding_bbox_to_geogrid<isce3::product::PolarGridParameters>(py::module &);
