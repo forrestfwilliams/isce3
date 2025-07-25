@@ -7,3 +7,5 @@
 void addbinding(pybind11::class_<isce3::geometry::detail::Geo2RdrParams>&);
 void addbinding(pybind11::class_<isce3::geometry::Geo2rdr>&);
 void addbinding_geo2rdr(pybind11::module& m);
+template<typename T_grid>
+void addbinding_geo2rdr_grid(pybind11::module& m);

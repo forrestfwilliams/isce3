@@ -68,8 +68,12 @@ void addsubmodule_geometry(py::module & m)
     addbinding_get_geolocation_grid(geometry);
     addbinding_geo2rdr(geometry);
     addbinding_geo2rdr_roots(geometry);
+    addbinding_geo2rdr_grid<isce3::product::RadarGridParameters>(geometry);
+    addbinding_geo2rdr_grid<isce3::product::PolarGridParameters>(geometry);
     addbinding_rdr2geo(geometry);
     addbinding_rdr2geo_roots(geometry);
+    addbinding_rdr2geo_grid<isce3::product::RadarGridParameters>(geometry);
+    addbinding_rdr2geo_grid<isce3::product::PolarGridParameters>(geometry);
     addbinding_boundingbox(geometry);
     addbinding_metadata_cubes(geometry);
     addbinding_ltp_coordinates(geometry);

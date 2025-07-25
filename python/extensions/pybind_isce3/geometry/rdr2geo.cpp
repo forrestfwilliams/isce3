@@ -276,5 +276,34 @@ void addbinding(py::class_<Topo<T_grid>>& pyRdr2Geo)
                     py::overload_cast<size_t>(&Topo<T_grid>::linesPerBlock));
 }
 
+template<typename T_grid>
+void addbinding_rdr2geo_grid(py::module& m)
+{
+    m.def(
+        "rdr2geo",
+        [](double aztime, double range,
+            isce3::core::LUT2d<double>& doppler,
+            const Orbit& orbit, const Ellipsoid& ellipsoid,
+            const DEMInterpolator& dem, T_grid radarGrid,
+            py::kwargs r2g_kw) {
+            auto opt = handle_r2g_kwargs(r2g_kw);
+            // FIXME figure out dem.midLonLat() segfaults
+            Vec3 targetLLH {dem.midX(), dem.midY(), dem.refHeight()};
+            int converged = isce3::geometry::rdr2geoGrid(
+                aztime, range, doppler, orbit, ellipsoid, dem, targetLLH,
+                radarGrid, opt.threshold, opt.maxiter, opt.extraiter);
+            if (!converged)
+                throw std::runtime_error(
+                        "rdr2geo failed to converge");
+            return targetLLH;
+        },
+        py::arg("aztime"), py::arg("range"), py::arg("doppler"),
+        py::arg("orbit"), py::arg("ellipsoid") = Ellipsoid(),
+        py::arg("dem") = DEMInterpolator(), py::arg("radar_grid")
+    );
+}
+
 template void addbinding(py::class_<Topo<isce3::product::RadarGridParameters>>&);
 template void addbinding(py::class_<Topo<isce3::product::PolarGridParameters>>&);
+template void addbinding_rdr2geo_grid<isce3::product::RadarGridParameters>(pybind11::module& m);
+template void addbinding_rdr2geo_grid<isce3::product::PolarGridParameters>(pybind11::module& m);
