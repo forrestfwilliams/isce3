@@ -29,32 +29,6 @@ using isce3::core::Vec3;
 using isce3::core::ProjectionBase;
 using isce3::core::Basis;
 
-int isce3::geometry::rdr2geo_bracketWrapper(
-        double aztime, double slantRange, double doppler,
-        const isce3::core::Orbit& orbit, const isce3::geometry::DEMInterpolator& demInterp,
-        Vec3 &xyz, const isce3::product::RadarGridParameters &radarGrid,
-        const double threshold)
-{
-    const int converged = rdr2geo_bracket(aztime, slantRange, doppler,
-            orbit, demInterp, xyz, radarGrid.wavelength(),
-            radarGrid.lookSide(), threshold);
-    return converged;
-}
-
-int isce3::geometry::rdr2geo_bracketWrapper(
-        double azdist, double slantRange, double doppler,
-        const isce3::core::Orbit& orbit, const isce3::geometry::DEMInterpolator& demInterp,
-        Vec3 &xyz, const isce3::product::PolarGridParameters &radarGrid,
-        const double threshold)
-{
-    double rng, rngrate;
-    radarGrid.rangeRangeRate(rng, rngrate, azdist, slantRange);
-    const int converged = rdr2geo_bracket(0.0, rng, doppler,
-            orbit, demInterp, xyz, 1.0,
-            radarGrid.lookSide(), threshold);
-    return converged;
-}
-
 template<class T_grid>
 isce3::geometry::Perimeter
 isce3::geometry::
@@ -114,7 +88,7 @@ getGeoPerimeter(const T_grid &radarGrid,
         Vec3 xyz, llh;
         const auto fd = doppler.eval(point.time, point.range);
 
-        const auto converged = rdr2geo_bracketWrapper(point.time, point.range, fd,
+        const auto converged = rdr2geo_bracketGrid(point.time, point.range, fd,
                 orbit, demInterp, xyz, radarGrid, threshold);
 
         if (not converged) {

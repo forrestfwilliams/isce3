@@ -279,6 +279,7 @@ void addbinding(py::class_<Topo<T_grid>>& pyRdr2Geo)
 template<typename T_grid>
 void addbinding_rdr2geo_grid(py::module& m)
 {
+    Rdr2GeoParams defaults;
     m.def(
         "rdr2geo",
         [](double aztime, double range,
@@ -287,6 +288,7 @@ void addbinding_rdr2geo_grid(py::module& m)
             const DEMInterpolator& dem, T_grid radarGrid,
             py::kwargs r2g_kw) {
             auto opt = handle_r2g_kwargs(r2g_kw);
+            auto midx = dem.midX();
             // FIXME figure out dem.midLonLat() segfaults
             Vec3 targetLLH {dem.midX(), dem.midY(), dem.refHeight()};
             int converged = isce3::geometry::rdr2geoGrid(

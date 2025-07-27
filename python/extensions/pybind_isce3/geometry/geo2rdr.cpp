@@ -153,6 +153,7 @@ void addbinding_geo2rdr_grid(pybind11::module& m)
                         threshold, maxiter, delta_range, flag_edge);
                 if (!converged)
                     throw std::runtime_error("geo2rdr failed to converge");
+
                 return std::make_pair(aztime, slant_range);
         },
         py::arg("lon_lat_height"),
