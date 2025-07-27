@@ -1045,8 +1045,10 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
                 // Get LLH and XYZ coordinates for this azimuth/range
                 isce3::core::cartesian_t targetLLH, targetXYZ;
                 targetLLH[2] = avg_hgt; // initialize first guess
-                rdr2geo(a, slt_range, 0, orbit, ellps, flat_interp, targetLLH,
-                        radar_grid.wavelength(), side, 1e-8, 20, 20);
+                // TODO: does it make sense to compute the correction this way for PFA geometries
+                isce3::core::LUT2d zero_doppler(0.0);
+                rdr2geoGrid(a, slt_range, zero_doppler, orbit, ellps, flat_interp,
+                        targetLLH, radar_grid, 1e-8, 20, 20);
 
                 // Computation of ENU coordinates around ground target
                 ellps.lonLatToXyz(targetLLH, targetXYZ);
