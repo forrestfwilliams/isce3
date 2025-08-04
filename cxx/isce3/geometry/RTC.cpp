@@ -915,9 +915,14 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
 
             // Compute look angle from sensor to ground
             const Vec3 xyz_mid = ellps.lonLatToXyz(inputLLH);
+
+            // Determine azimuth time to use based on grid type
+            double interp_time = a;
+            if (dynamic_cast<const isce3::product::PolarGridParameters*>(&radar_grid))
+                interp_time = radar_grid.sensingStart();
             isce3::core::cartesian_t xyz_plat, vel;
             isce3::error::ErrorCode status = orbit.interpolate(
-                    &xyz_plat, &vel, a, OrbitInterpBorderMode::FillNaN);
+                    &xyz_plat, &vel, interp_time, OrbitInterpBorderMode::FillNaN);
             if (status != isce3::error::ErrorCode::Success)
                 continue;
 
@@ -1031,7 +1036,7 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
         _Pragma("omp parallel for schedule(dynamic) collapse(2)")
         for (size_t i = 0; i < radar_grid.length(); ++i) {
             for (size_t j = 0; j < radar_grid.width(); ++j) {
-
+                // FIXME: this whole block doesn't work for PFA!!!
                 isce3::core::cartesian_t xyz_plat, vel;
                 double a = radar_grid.azimuth(i);
                 isce3::error::ErrorCode status = orbit.interpolate(
@@ -1045,7 +1050,6 @@ void computeRtcBilinearDistribution(isce3::io::Raster& dem_raster,
                 // Get LLH and XYZ coordinates for this azimuth/range
                 isce3::core::cartesian_t targetLLH, targetXYZ;
                 targetLLH[2] = avg_hgt; // initialize first guess
-                // TODO: does it make sense to compute the correction this way for PFA geometries
                 isce3::core::LUT2d zero_doppler(0.0);
                 rdr2geoGrid(a, slt_range, zero_doppler, orbit, ellps, flat_interp,
                         targetLLH, radar_grid, 1e-8, 20, 20);
@@ -1416,9 +1420,13 @@ void _RunBlock(const int jmax, const int block_size,
             const Vec3 xyz_c = ellipsoid.lonLatToXyz(target_llh);
 
             // Calculate look vector
+            // Determine azimuth time to use based on grid type
+            double interp_time = a_c;
+            if (dynamic_cast<const isce3::product::PolarGridParameters*>(&radar_grid))
+                interp_time = radar_grid.sensingStart();
             isce3::core::cartesian_t xyz_plat, vel;
             isce3::error::ErrorCode status = orbit.interpolate(
-                    &xyz_plat, &vel, a_c, OrbitInterpBorderMode::FillNaN);
+                    &xyz_plat, &vel, interp_time, OrbitInterpBorderMode::FillNaN);
             if (status != isce3::error::ErrorCode::Success)
                 continue;
 
