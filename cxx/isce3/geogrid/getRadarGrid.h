@@ -48,9 +48,9 @@ namespace isce3 { namespace geogrid {
  * @param[out] simulated_radar_brightness_raster Simulated radar brightness
  * raster
  */
+template<typename T_grid>
 void getRadarGrid(
-        isce3::core::LookSide lookside,
-        const double wavelength,
+        const T_grid& radar_grid,
         isce3::io::Raster& dem_raster,
         const isce3::product::GeoGridParameters& geogrid,
         const isce3::core::Orbit& orbit,
@@ -72,5 +72,4 @@ void getRadarGrid(
         isce3::io::Raster* local_incidence_angle_raster = nullptr,
         isce3::io::Raster* projection_angle_raster = nullptr,
         isce3::io::Raster* simulated_radar_brightness_raster = nullptr);
-
 }}

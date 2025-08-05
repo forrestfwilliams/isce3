@@ -9,6 +9,8 @@
 #include <isce3/geometry/DEMInterpolator.h>
 #include <isce3/geometry/metadataCubes.h>
 #include <isce3/product/GeoGridParameters.h>
+#include <isce3/product/RadarGridParameters.h>
+#include <isce3/product/PolarGridParameters.h>
 #include <isce3/core/DenseMatrix.h>
 
 namespace isce3 {
@@ -54,8 +56,8 @@ static void writeArray(isce3::io::Raster* raster,
     raster->setEPSG(geogrid.epsg());
 }
 
-void getRadarGrid(isce3::core::LookSide lookside,
-                    const double wavelength,
+template<typename T_grid>
+void getRadarGrid(const T_grid& radar_grid,
                     isce3::io::Raster& dem_raster,
                     const isce3::product::GeoGridParameters& geogrid,
                     const isce3::core::Orbit& orbit,
@@ -82,8 +84,8 @@ void getRadarGrid(isce3::core::LookSide lookside,
 
     geogrid.print();
 
-    info << "wavelength: " << wavelength << pyre::journal::newline;
-    info << "lookside: " << lookside << pyre::journal::newline;
+    info << "wavelength: " << radar_grid.wavelength() << pyre::journal::newline;
+    info << "lookside: " << radar_grid.lookSide() << pyre::journal::newline;
     info << "geo2rdr threshold: " << geo2rdr_params.threshold << pyre::journal::newline;
     info << "geo2rdr max. number of iterations: " << geo2rdr_params.maxiter << pyre::journal::newline;
     info << "geo2rdr delta range: " << geo2rdr_params.delta_range << pyre::journal::endl;
@@ -194,11 +196,11 @@ void getRadarGrid(isce3::core::LookSide lookside,
             const isce3::core::Vec3 target_llh = proj->inverse(target_proj);
 
             // Get grid Doppler azimuth and slant-range position
-            int converged = isce3::geometry::geo2rdr(
+            int converged = isce3::geometry::geo2rdrGrid(
                     target_llh, ellipsoid, orbit, grid_doppler,
-                    azimuth_time, slant_range, wavelength,
-                    lookside, geo2rdr_params.threshold,
-                    geo2rdr_params.maxiter, geo2rdr_params.delta_range);
+                    azimuth_time, slant_range, radar_grid,
+                    geo2rdr_params.threshold, geo2rdr_params.maxiter,
+                    geo2rdr_params.delta_range);
 
             // Check convergence
             if (!converged) {
@@ -235,19 +237,21 @@ void getRadarGrid(isce3::core::LookSide lookside,
             To retrieve platform position (considering
             native Doppler), estimate native_azimuth_time
             */
-            converged = isce3::geometry::geo2rdr(
-                    target_llh, ellipsoid, orbit, native_doppler,
-                    native_azimuth_time, native_slant_range,
-                    wavelength, lookside,
-                    geo2rdr_params.threshold, geo2rdr_params.maxiter,
-                    geo2rdr_params.delta_range);
+            if (dynamic_cast<const isce3::product::PolarGridParameters*>(&radar_grid))
+                native_azimuth_time = radar_grid.sensingStart();
+            else
+                converged = isce3::geometry::geo2rdrGrid(
+                        target_llh, ellipsoid, orbit, native_doppler,
+                        native_azimuth_time, native_slant_range,
+                        radar_grid, geo2rdr_params.threshold,
+                        geo2rdr_params.maxiter, geo2rdr_params.delta_range);
 
-            // Check convergence
-            if (!converged) {
-                native_azimuth_time = std::numeric_limits<double>::quiet_NaN();
-                native_slant_range = std::numeric_limits<double>::quiet_NaN();
-                continue;
-            }
+                // Check convergence
+                if (!converged) {
+                    native_azimuth_time = std::numeric_limits<double>::quiet_NaN();
+                    native_slant_range = std::numeric_limits<double>::quiet_NaN();
+                    continue;
+                }
 
             Vec3 terrain_normal_unit_vec_enu {0, 0, 1.};
 
@@ -343,7 +347,8 @@ void getRadarGrid(isce3::core::LookSide lookside,
                 terrain_normal_unit_vec_enu = 
                     terrain_normal_unit_vec_enu.normalized();
             }
-
+            // Compute incidence angle
+            isce3::core::LookSide lookside = radar_grid.lookSide();
             isce3::geometry::writeVectorDerivedCubes(
                     i, j, native_azimuth_time, target_llh,
                     orbit, ellipsoid,
@@ -385,4 +390,50 @@ void getRadarGrid(isce3::core::LookSide lookside,
 
 }
 
+template void getRadarGrid<isce3::product::RadarGridParameters>(
+    const isce3::product::RadarGridParameters& radar_grid,
+    isce3::io::Raster& dem_raster,
+    const isce3::product::GeoGridParameters& geogrid,
+    const isce3::core::Orbit& orbit,
+    const isce3::core::LUT2d<double>& native_doppler,
+    const isce3::core::LUT2d<double>& grid_doppler,
+    isce3::core::dataInterpMethod dem_interp_method,
+    const isce3::geometry::detail::Geo2RdrParams& geo2rdr_params,
+    isce3::io::Raster* interpolated_dem_raster,
+    isce3::io::Raster* slant_range_raster,
+    isce3::io::Raster* azimuth_time_raster,
+    isce3::io::Raster* incidence_angle_raster,
+    isce3::io::Raster* los_unit_vector_x_raster,
+    isce3::io::Raster* los_unit_vector_y_raster,
+    isce3::io::Raster* along_track_unit_vector_x_raster,
+    isce3::io::Raster* along_track_unit_vector_y_raster,
+    isce3::io::Raster* elevation_angle_raster,
+    isce3::io::Raster* ground_track_velocity_raster,
+    isce3::io::Raster* local_incidence_angle_raster,
+    isce3::io::Raster* projection_angle_raster,
+    isce3::io::Raster* simulated_radar_brightness_raster);
+
+
+template void getRadarGrid<isce3::product::PolarGridParameters>(
+    const isce3::product::PolarGridParameters& radar_grid,
+    isce3::io::Raster& dem_raster,
+    const isce3::product::GeoGridParameters& geogrid,
+    const isce3::core::Orbit& orbit,
+    const isce3::core::LUT2d<double>& native_doppler,
+    const isce3::core::LUT2d<double>& grid_doppler,
+    isce3::core::dataInterpMethod dem_interp_method,
+    const isce3::geometry::detail::Geo2RdrParams& geo2rdr_params,
+    isce3::io::Raster* interpolated_dem_raster,
+    isce3::io::Raster* slant_range_raster,
+    isce3::io::Raster* azimuth_time_raster,
+    isce3::io::Raster* incidence_angle_raster,
+    isce3::io::Raster* los_unit_vector_x_raster,
+    isce3::io::Raster* los_unit_vector_y_raster,
+    isce3::io::Raster* along_track_unit_vector_x_raster,
+    isce3::io::Raster* along_track_unit_vector_y_raster,
+    isce3::io::Raster* elevation_angle_raster,
+    isce3::io::Raster* ground_track_velocity_raster,
+    isce3::io::Raster* local_incidence_angle_raster,
+    isce3::io::Raster* projection_angle_raster,
+    isce3::io::Raster* simulated_radar_brightness_raster);
 }}
