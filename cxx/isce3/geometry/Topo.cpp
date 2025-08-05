@@ -441,7 +441,7 @@ _initAzimuthLine(size_t line, double& tline, Vec3& pos, Vec3& vel, Basis& TCNbas
     tline = _radarGrid.azimuth(line);
 
     // Get state vector
-    _orbit.interpolate(&pos, &vel, radar_grid.azimuthStart(),
+    _orbit.interpolate(&pos, &vel, radar_grid.sensingStart(),
                        isce3::core::OrbitInterpBorderMode::FillNaN);
 
     // Get geocentric TCN basis using satellite basis
