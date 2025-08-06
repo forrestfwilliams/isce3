@@ -191,6 +191,11 @@ class isce3::product::RadarGridParameters: public RngAzmGridParameters {
         inline double slantRangeIndex(double slant_range) const {
             return (slant_range  -  _startingRange) / _rangePixelSpacing;
         }
+        
+        // FIXME: remove this eventually
+        inline double slantRangeIndex2(double line, double slant_range) const {
+            return (slant_range  -  _startingRange) / _rangePixelSpacing;
+        }
 
         /** Get slant range fractional index at a given slant range distance 
          * assuming you start from the outer edge */

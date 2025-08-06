@@ -797,6 +797,7 @@ setLayoverShadow(TopoLayers& layers, DEMInterpolator& demInterp,
                  std::vector<Vec3>& satPosition, size_t block,
                  size_t n_blocks)
 {
+    pyre::journal::info_t info("isce.geometry.Topo");
     // Cache the width of the block
     const int width = layers.width();
     // Compute layover on oversampled grid
@@ -820,6 +821,8 @@ setLayoverShadow(TopoLayers& layers, DEMInterpolator& demInterp,
     long long num_lines_done = 0;
 
     // Loop over lines in block
+    int non_zero = 0;
+    int non_fine = 0;
 #pragma omp parallel for shared(num_lines_done)
     for (size_t line = 0; line < layers.length(); ++line) {
 
@@ -833,6 +836,7 @@ setLayoverShadow(TopoLayers& layers, DEMInterpolator& demInterp,
 
         // Cache satellite position for this line
         const Vec3& xyzSat = satPosition[line];
+        size_t lineStart = block * _linesPerBlock;
 
         // Copy cross-track, x, and y values for the line
         for (int i = 0; i < width; ++i) {
@@ -959,14 +963,18 @@ setLayoverShadow(TopoLayers& layers, DEMInterpolator& demInterp,
             if (maskGrid[i]) {
 
                 const long slant_range_index =
-                    lround(std::round(_radarGrid.slantRangeIndex(
-                        slantRangeGrid[i])));
+                    lround(std::round(_radarGrid.slantRangeIndex2(
+                        lineStart + line, slantRangeGrid[i])));
 
+                if (maskGrid[i] != 0) {
+                    non_fine++;
+                }
                 // If out of bounds, escape
                 if (slant_range_index < 0 || slant_range_index >= width) {
                     continue;
                 }
 
+                non_zero++;
                 // Otherwise, update it
                 const short mask_value = layers.mask(line, slant_range_index);
 
@@ -997,7 +1005,11 @@ setLayoverShadow(TopoLayers& layers, DEMInterpolator& demInterp,
                     fflush(stdout);
 
     } // end loop lines
-
+    info << "Block " << block + 1 << pyre::journal::newline
+            << non_fine << " non-zero mask values" << pyre::journal::newline
+            << non_zero << " set mask values" << pyre::journal::newline
+            << "Width: " << width << pyre::journal::newline
+            << pyre::journal::endl;
     printf("\rLayover/shadow mask progress (block %d/%d): 100%%\n",
         (int) block + 1, (int) n_blocks), fflush(stdout);
 }

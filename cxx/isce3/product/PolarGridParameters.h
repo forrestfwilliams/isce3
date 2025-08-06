@@ -193,6 +193,17 @@ class isce3::product::PolarGridParameters : public RngAzmGridParameters {
             return (sr_dist - (_rangeStart + 0.5 * _rangePixelSpacing)) / _rangePixelSpacing;
         }
         
+        inline double slantRangeIndex2(double line, double slant_range) const {
+            double a11 = _polarMatrix(0,0);
+            double a12 = _polarMatrix(0,1);
+            double rel_range = slant_range - _centerRange;
+            double az_dist = azimuth(line);
+            double sr_dist = (rel_range - a12*az_dist) / a11;
+            sr_dist += _rangeSceneCenter;
+            double sr_index = ((sr_dist - _rangeStart) / _rangePixelSpacing);
+            return sr_index;
+        }
+
         inline double slantRangeMid() const {return _centerRange;}
 
 
