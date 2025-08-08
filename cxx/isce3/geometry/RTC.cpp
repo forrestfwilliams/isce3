@@ -1937,6 +1937,48 @@ template void applyRtc<isce3::product::PolarGridParameters>(
         isce3::core::MemoryModeBlocksY);
 
 template void isce3::geometry::computeRtc<isce3::product::RadarGridParameters>(
+        isce3::io::Raster&, isce3::io::Raster&,
+        const isce3::product::RadarGridParameters&,
+        const isce3::core::Orbit&,
+        const isce3::core::LUT2d<double>&, const double,
+        const double, const double, const double,
+        const int, const int, const int,
+        rtcInputTerrainRadiometry,
+        rtcOutputTerrainRadiometry,
+        rtcAreaMode, rtcAlgorithm,
+        rtcAreaBetaMode,
+        double, float,
+        isce3::io::Raster*,
+        isce3::io::Raster*, isce3::io::Raster*,
+        const isce3::core::LUT2d<double>&,
+        const isce3::core::LUT2d<double>&,
+        isce3::core::MemoryModeBlocksY,
+        isce3::core::dataInterpMethod, double,
+        int, double, const long long,
+        const long long);
+
+template void isce3::geometry::computeRtc<isce3::product::PolarGridParameters>(
+        isce3::io::Raster&, isce3::io::Raster&,
+        const isce3::product::PolarGridParameters&,
+        const isce3::core::Orbit&,
+        const isce3::core::LUT2d<double>&, const double,
+        const double, const double, const double,
+        const int, const int, const int,
+        rtcInputTerrainRadiometry,
+        rtcOutputTerrainRadiometry,
+        rtcAreaMode, rtcAlgorithm,
+        rtcAreaBetaMode,
+        double, float,
+        isce3::io::Raster*,
+        isce3::io::Raster*, isce3::io::Raster*,
+        const isce3::core::LUT2d<double>&,
+        const isce3::core::LUT2d<double>&,
+        isce3::core::MemoryModeBlocksY,
+        isce3::core::dataInterpMethod, double,
+        int, double, const long long,
+        const long long);
+
+template void isce3::geometry::computeRtc<isce3::product::RadarGridParameters>(
     const isce3::product::RadarGridParameters&,
     const isce3::core::Orbit&,
     const isce3::core::LUT2d<double>&,
@@ -1959,27 +2001,6 @@ template void isce3::geometry::computeRtc<isce3::product::RadarGridParameters>(
     double,
     long long,
     long long);
-
-template void isce3::geometry::computeRtc<isce3::product::RadarGridParameters>(
-        isce3::io::Raster&, isce3::io::Raster&,
-        const isce3::product::RadarGridParameters&,
-        const isce3::core::Orbit&,
-        const isce3::core::LUT2d<double>&, const double,
-        const double, const double, const double,
-        const int, const int, const int,
-        rtcInputTerrainRadiometry,
-        rtcOutputTerrainRadiometry,
-        rtcAreaMode, rtcAlgorithm,
-        rtcAreaBetaMode,
-        double, float,
-        isce3::io::Raster*,
-        isce3::io::Raster*, isce3::io::Raster*,
-        const isce3::core::LUT2d<double>&,
-        const isce3::core::LUT2d<double>&,
-        isce3::core::MemoryModeBlocksY,
-        isce3::core::dataInterpMethod, double,
-        int, double, const long long,
-        const long long);
 
 template void isce3::geometry::computeRtc<isce3::product::PolarGridParameters>(
     const isce3::product::PolarGridParameters&,
