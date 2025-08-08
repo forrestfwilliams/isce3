@@ -21,6 +21,7 @@
 #include <isce3/product/RadarGridProduct.h>
 #include <isce3/product/RadarGridParameters.h>
 #include <isce3/product/PolarGridParameters.h>
+#include <isce3/product/RngAzmGridParameters.h>
 
 // isce3::geometry
 #include <isce3/geometry/RTC.h>
@@ -33,17 +34,8 @@ enum geocodeOutputMode {
     AREA_PROJECTION = 1,
 };
 
-/** Wrapper function to simplify calling geo2rdr with different grid types */
-static int _geo2rdrGrid(const Vec3&, const Ellipsoid&, const Orbit&, const LUT2d<double>&,
-                        double&, double&, const isce3::product::RadarGridParameters&,
-                        double, int, double, bool);
 
-/** Wrapper function to simplify calling geo2rdr with different grid types */
-static int _geo2rdrGrid(const Vec3&, const Ellipsoid&, const Orbit&, const LUT2d<double>&,
-                        double&, double&, const isce3::product::PolarGridParameters&,
-                        double, int, double, bool);
-
-template<class T, class T_grid = isce3::product::RadarGridParameters>
+template<class T>
 class Geocode {
 public:
     /** Geocode data from slant-range to map coordinates
@@ -155,7 +147,7 @@ public:
      * @param[in]  max_block_size      Maximum block size (per thread)
      * @param[in]  dem_interp_method   DEM interpolation method
      */
-    void geocode(const T_grid& radar_grid,
+    void geocode(const isce3::product::RngAzmGridParameters& radar_grid,
             isce3::io::Raster& input_raster, isce3::io::Raster& output_raster,
             isce3::io::Raster& dem_raster,
             geocodeOutputMode output_mode = geocodeOutputMode::INTERP,
@@ -296,7 +288,7 @@ public:
      * @param[in]  dem_interp_method   DEM interpolation method
      */
     template<class T_out>
-    void geocodeInterp(const T_grid& radar_grid,
+    void geocodeInterp(const isce3::product::RadarGridParameters& radar_grid,
             isce3::io::Raster& input_raster, isce3::io::Raster& output_raster,
             isce3::io::Raster& dem_raster, bool flag_apply_rtc = false,
             bool flag_az_baseband_doppler = false, bool flatten = false,
@@ -439,7 +431,7 @@ public:
      */
     template<class T_out>
     void geocodeAreaProj(
-            const T_grid& radar_grid,
+            const isce3::product::RngAzmGridParameters& radar_grid,
             isce3::io::Raster& input_raster, isce3::io::Raster& output_raster,
             isce3::io::Raster& dem_raster,
             double geogrid_upsampling = 1,
@@ -504,7 +496,8 @@ public:
      * @param[in]  radar_grid          Radar grid
      * @param[in]  dem_raster          Input DEM raster
      */
-    void updateGeoGrid(const T_grid& radar_grid, isce3::io::Raster& dem_raster);
+    void updateGeoGrid(const isce3::product::RadarGridParameters& radar_grid,
+                       isce3::io::Raster& dem_raster);
 
     // Get/set data interpolator
     isce3::core::dataInterpMethod dataInterpolator() const 
@@ -564,7 +557,7 @@ private:
     the Geocode object geogrid attributes.
     */
     void _getRadarGridBoundaries(
-            const T_grid& radar_grid,
+            const isce3::product::RadarGridParameters& radar_grid,
             isce3::io::Raster& input_raster, isce3::io::Raster& dem_raster,
             isce3::core::ProjectionBase* proj, double geogrid_upsampling,
             bool flag_upsample_radar_grid,
@@ -581,7 +574,7 @@ private:
             const int k_end, double geogrid_upsampling, double* a11,
             double* r11, double* y_min, double* x_min, double* y_max,
             double* x_max,
-            const T_grid& radar_grid,
+            const isce3::product::RadarGridParameters& radar_grid,
             isce3::core::ProjectionBase* proj,
             isce3::geometry::DEMInterpolator& dem_interp_block,
             const std::function<Vec3(double, double,
@@ -600,7 +593,7 @@ private:
     */
     bool _checkLoadEntireRslcCorners(const double y0, const double x0,
             const double yf, const double xf,
-            const T_grid& radar_grid,
+            const isce3::product::RadarGridParameters& radar_grid,
             isce3::core::ProjectionBase* proj,
             const std::function<Vec3(double, double,
                     const isce3::geometry::DEMInterpolator&,
@@ -614,7 +607,7 @@ private:
     void _getRadarPositionBorder(double geogrid_upsampling, const double dem_y1,
             const double dem_x1, const double dem_yf, const double dem_xf,
             double* a_min, double* r_min, double* a_max, double* r_max,
-            const T_grid& radar_grid,
+            const isce3::product::RadarGridParameters& radar_grid,
             isce3::core::ProjectionBase* proj,
             const std::function<Vec3(double, double,
                     const isce3::geometry::DEMInterpolator&,
@@ -624,7 +617,7 @@ private:
             const isce3::core::LUT2d<double>& slant_range_correction = {});
 
     template<class T2, class T_out>
-    void _runBlock(const T_grid& radar_grid,
+    void _runBlock(const isce3::product::RadarGridParameters& radar_grid,
             bool is_radar_grid_single_block,
             std::vector<std::unique_ptr<isce3::core::Matrix<T2>>>& rdrData,
             int block_size_y, int block_size_with_upsampling_y, int block_y,
@@ -661,7 +654,7 @@ private:
 
     std::string _get_nbytes_str(long nbytes);
 
-    int _geo2rdr(const T_grid& radar_grid,
+    int _geo2rdr(const isce3::product::RadarGridParameters& radar_grid,
             double x, double y, double& azimuthTime, double& slantRange,
             isce3::geometry::DEMInterpolator& demInterp,
             isce3::core::ProjectionBase* proj, float& dem_value);
@@ -729,7 +722,7 @@ private:
             const int radarBlockLength, const int azimuthFirstLine,
             const int rangeFirstPixel,
             const isce3::core::Interpolator<T_out>* interp,
-            const T_grid& radarGrid,
+            const isce3::product::RadarGridParameters& radarGrid,
             const bool flag_az_baseband_doppler, const bool flatten,
             isce3::io::Raster* phase_screen_raster,
             isce3::core::Matrix<float>& phase_screen_array,

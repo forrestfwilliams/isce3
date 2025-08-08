@@ -5,16 +5,19 @@
 #include <isce3/io/Raster.h>
 #include <isce3/product/GeoGridParameters.h>
 #include <isce3/geometry/detail/Geo2Rdr.h>
+#include <isce3/product/RadarGridParameters.h>
+#include <isce3/product/PolarGridParameters.h>
 
 namespace py = pybind11;
 
+template<typename T_grid>
 void addbinding_get_radar_grid(pybind11::module& m)
 {
 
     const isce3::geometry::detail::Geo2RdrParams geo2rdr_defaults;
 
-    m.def("get_radar_grid", &isce3::geogrid::getRadarGrid,
-          py::arg("lookside"), py::arg("wavelength"), py::arg("dem_raster"),
+    m.def("get_radar_grid", &isce3::geogrid::getRadarGrid<T_grid>,
+          py::arg("radar_grid"), py::arg("dem_raster"),
           py::arg("geogrid"), py::arg("orbit"), py::arg("native_doppler"), 
           py::arg("grid_doppler"),
           py::arg("dem_interp_method") = isce3::core::BIQUINTIC_METHOD,
@@ -90,3 +93,5 @@ void addbinding_get_radar_grid(pybind11::module& m)
 )");
 
 }
+template void addbinding_get_radar_grid<isce3::product::RadarGridParameters>(pybind11::module& m);
+template void addbinding_get_radar_grid<isce3::product::PolarGridParameters>(pybind11::module& m);

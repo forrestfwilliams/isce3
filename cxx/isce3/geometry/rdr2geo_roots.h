@@ -6,6 +6,8 @@
 #include <cmath>
 
 #include <isce3/geometry/detail/Rdr2Geo.h>
+#include <isce3/product/RadarGridParameters.h>
+#include <isce3/product/PolarGridParameters.h>
 
 namespace isce3 { namespace geometry {
 
@@ -36,6 +38,22 @@ int rdr2geo_bracket(double aztime, double slantRange, double doppler,
         const isce3::geometry::DEMInterpolator& dem,
         isce3::core::Vec3& targetXYZ, double wavelength,
         isce3::core::LookSide side,
+        double tolHeight = isce3::geometry::detail::DEFAULT_TOL_HEIGHT,
+        double lookMin = 0.0, double lookMax = M_PI / 2);
+
+int rdr2geo_bracketGrid(double aztime, double slantRange, double doppler,
+        const isce3::core::Orbit& orbit,
+        const isce3::geometry::DEMInterpolator& dem,
+        isce3::core::Vec3& targetXYZ,
+        isce3::product::RadarGridParameters radarGrid,
+        double tolHeight = isce3::geometry::detail::DEFAULT_TOL_HEIGHT,
+        double lookMin = 0.0, double lookMax = M_PI / 2);
+
+int rdr2geo_bracketGrid(double aztime, double slantRange, double doppler,
+        const isce3::core::Orbit& orbit,
+        const isce3::geometry::DEMInterpolator& dem,
+        isce3::core::Vec3& targetXYZ,
+        isce3::product::PolarGridParameters radarGrid,
         double tolHeight = isce3::geometry::detail::DEFAULT_TOL_HEIGHT,
         double lookMin = 0.0, double lookMax = M_PI / 2);
 

@@ -16,10 +16,12 @@
 #include <isce3/geometry/geometry.h>
 #include <isce3/io/Raster.h>
 #include <isce3/product/RadarGridParameters.h>
+#include <isce3/product/PolarGridParameters.h>
 
 using isce3::geometry::detail::Geo2RdrParams;
 using isce3::geometry::Geo2rdr;
 using isce3::geometry::geo2rdr;
+using isce3::geometry::geo2rdrGrid;
 
 namespace py = pybind11;
 
@@ -134,3 +136,36 @@ void addbinding_geo2rdr(pybind11::module& m)
         )"
         );
 }
+
+template<typename T_grid>
+void addbinding_geo2rdr_grid(pybind11::module& m)
+{
+    const isce3::geometry::detail::Geo2RdrParams defaults;
+    m.def("geo2rdr",
+        [](const Vec3& lon_lat_height, const Ellipsoid& ellipsoid, const Orbit& orbit,
+            const LUT2d<double>& doppler, T_grid radar_grid,
+            double threshold, int maxiter, double delta_range) {
+                double aztime, slant_range;
+                bool flag_edge = false;
+                int converged = geo2rdrGrid(
+                        lon_lat_height, ellipsoid, orbit, doppler,
+                        aztime, slant_range, radar_grid,
+                        threshold, maxiter, delta_range, flag_edge);
+                if (!converged)
+                    throw std::runtime_error("geo2rdr failed to converge");
+
+                return std::make_pair(aztime, slant_range);
+        },
+        py::arg("lon_lat_height"),
+        py::arg("ellipsoid")=Ellipsoid(),
+        py::arg("orbit"),
+        py::arg("doppler"),
+        py::arg("radar_grid"),
+        py::arg("threshold")=defaults.threshold,
+        py::arg("maxiter")=defaults.maxiter,
+        py::arg("delta_range")=defaults.delta_range
+        );
+}
+
+template void addbinding_geo2rdr_grid<isce3::product::RadarGridParameters>(pybind11::module& m);
+template void addbinding_geo2rdr_grid<isce3::product::PolarGridParameters>(pybind11::module& m);

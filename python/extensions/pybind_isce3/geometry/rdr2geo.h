@@ -6,4 +6,7 @@
 
 void addbinding(pybind11::class_<isce3::geometry::detail::Rdr2GeoParams>&);
 void addbinding_rdr2geo(pybind11::module& m);
-void addbinding(pybind11::class_<isce3::geometry::Topo>&);
+template<typename T_grid>
+void addbinding(pybind11::class_<isce3::geometry::Topo<T_grid>>&);
+template<typename T_grid>
+void addbinding_rdr2geo_grid(pybind11::module& m);

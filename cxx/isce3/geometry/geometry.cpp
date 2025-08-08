@@ -27,6 +27,7 @@
 #include <isce3/except/Error.h>
 #include <isce3/geometry/DEMInterpolator.h>
 #include <isce3/product/RadarGridParameters.h>
+#include <isce3/product/PolarGridParameters.h>
 
 #include "detail/Geo2Rdr.h"
 #include "detail/Rdr2Geo.h"
@@ -173,6 +174,36 @@ int _update_aztime(const Orbit& orbit, Vec3 satpos, Vec3 satvel, Vec3 inputXYZ,
 }
 }} // namespace isce3::geometry
 
+// PFA-based geo2rdr
+int isce3::geometry::geo2rdr(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const isce3::core::EMatrix2D<double, 2, 2>& polarMatrixInv,
+        double aztime, double centerRange, double centerRangeRate, 
+        double rangeSceneCenter, double azimuthSceneCenter, double rangePixelSpacing,
+        double azimuthPixelSpacing, double& range_distance, double& azimuth_distance)
+{
+    Vec3 satpos, satvel, inputXYZ;
+
+    // Interpolate the orbit for the (static!!!) azimuth time
+    orbit.interpolate(&satpos, &satvel, aztime, OrbitInterpBorderMode::FillNaN);
+
+    // Convert LLH to XYZ
+    ellipsoid.lonLatToXyz(inputLLH, inputXYZ);
+
+    Vec3 rangeDistance = inputXYZ - satpos;
+    double range = rangeDistance.norm();
+    double rangeRate = (-satvel).dot(rangeDistance) / range;
+    double rangeOffset = range - centerRange;
+    double rangeRateOffset = rangeRate - centerRangeRate;
+    
+    Eigen::Vector2d rangeInfo(rangeOffset, rangeRateOffset);
+    Eigen::Vector2d distances = polarMatrixInv * rangeInfo;
+    range_distance = distances(0) + rangeSceneCenter;
+    azimuth_distance = distances(1) + azimuthSceneCenter;
+
+    int converged = 1;
+    return converged;
+}
+
 int isce3::geometry::geo2rdr(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
         const Orbit& orbit, const Poly2d& doppler, double& aztime,
         double& slantRange, double wavelength, double startingRange,
@@ -247,6 +278,86 @@ int isce3::geometry::geo2rdr(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
     detail::Geo2RdrParams params = {threshold, maxIter, deltaRange};
     auto status = detail::geo2rdr(&aztime, &slantRange, inputLLH, ellipsoid,
             orbit, doppler, wavelength, side, t0, params);
+    return (status == ErrorCode::Success);
+}
+
+
+int isce3::geometry::geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const LUT2d<double>& doppler, double& aztime,
+        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge)
+{
+    int flag_converged;
+    for (int i = 0; i <= static_cast<int>(flag_edge); ++i) {
+        /*
+          Run geo2rdr twice for border edge pixels. This is
+          required because initial guesses (a11 and r11)
+          are not as good for edge elements. Without it,
+          the edge solutions are slightly different than the
+          corresponding solutions from single-block processing.
+       */
+       flag_converged = isce3::geometry::geo2rdr(inputLLH, ellipsoid, orbit,
+                doppler, aztime, slantRange, radar_grid.wavelength(),
+                radar_grid.lookSide(), threshold, maxIter, deltaRange);
+
+       if (!flag_converged) {
+            return flag_converged;
+       }
+    }
+    return flag_converged;
+}
+
+int isce3::geometry::geo2rdrGrid(const Vec3& inputLLH, const Ellipsoid& ellipsoid,
+        const Orbit& orbit, const LUT2d<double>& doppler, double& azdist,
+        double& slantRange, const isce3::product::PolarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge)
+{
+    int flag_converged;
+    flag_converged = isce3::geometry::geo2rdr(inputLLH,
+            ellipsoid, orbit, radar_grid.polarMatrixInv(),
+            radar_grid.sensingStart(), radar_grid.centerRange(),
+            radar_grid.centerRangeRate(), 
+            radar_grid.rangeSceneCenter(), radar_grid.azimuthSceneCenter(),
+            radar_grid.rangePixelSpacing(), radar_grid.azimuthPixelSpacing(),
+            slantRange, azdist);
+    return flag_converged;
+}
+
+int isce3::geometry::rdr2geoGrid(double aztime, double slantRange,
+        const LUT2d<double>& doppler,
+        const Orbit& orbit, const Ellipsoid& ellipsoid,
+        const DEMInterpolator& demInterp, Vec3& targetLLH,
+        isce3::product::RadarGridParameters radarGrid,
+        double threshold, int maxIter, int extraIter)
+{
+    double h0 = targetLLH[2];
+    double dopplerVal = doppler.eval(aztime, slantRange);
+    detail::Rdr2GeoParams params = {threshold, maxIter, extraIter};
+    auto status = detail::rdr2geo(&targetLLH, aztime, slantRange, dopplerVal,
+            orbit, demInterp, ellipsoid,
+            radarGrid.wavelength(), radarGrid.lookSide(),
+            h0, params);
+    return (status == ErrorCode::Success);
+}
+
+int isce3::geometry::rdr2geoGrid(double aztime, double slantRange,
+        const LUT2d<double>& doppler,
+        const Orbit& orbit, const Ellipsoid& ellipsoid,
+        const DEMInterpolator& demInterp, Vec3& targetLLH,
+        isce3::product::PolarGridParameters radarGrid,
+        double threshold, int maxIter, int extraIter)
+{
+    double h0 = targetLLH[2];
+    double rng, rngrate;
+    radarGrid.rangeRangeRate(rng, rngrate, aztime, slantRange);
+    double dopplerVal = doppler.eval(aztime, slantRange);
+    detail::Rdr2GeoParams params = {threshold, maxIter, extraIter};
+    auto status = detail::rdr2geo(&targetLLH, 0.0, rng, dopplerVal,
+            orbit, demInterp, ellipsoid,
+            1.0, radarGrid.lookSide(),
+            h0, params);
     return (status == ErrorCode::Success);
 }
 

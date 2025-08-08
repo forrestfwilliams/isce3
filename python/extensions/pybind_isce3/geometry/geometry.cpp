@@ -12,6 +12,7 @@
 #include "ltpcoordinates.h"
 #include "pntintersect.h"
 #include "lookIncFromSr.h"
+#include <isce3/product/PolarGridParameters.h>
 
 namespace py = pybind11;
 
@@ -24,8 +25,10 @@ void addsubmodule_geometry(py::module & m)
         pyDEMInterpolator(geometry, "DEMInterpolator");
     py::class_<isce3::geometry::Geo2rdr>
         pyGeo2Rdr(geometry, "Geo2Rdr");
-    py::class_<isce3::geometry::Topo>
+    py::class_<isce3::geometry::Topo<>>
         pyRdr2Geo(geometry, "Rdr2Geo");
+    py::class_<isce3::geometry::Topo<isce3::product::PolarGridParameters>>
+        pyRdr2GeoPolar(geometry, "Rdr2GeoPolar");
     py::class_<isce3::geometry::RadarGridBoundingBox>
         pyRadarGridBoundingBox(geometry, "RadarGridBoundingBox");
     py::class_<isce3::geometry::detail::Geo2RdrParams>
@@ -49,6 +52,7 @@ void addsubmodule_geometry(py::module & m)
     addbinding(pyDEMInterpolator);
     addbinding(pyGeo2Rdr);
     addbinding(pyRdr2Geo);
+    addbinding(pyRdr2GeoPolar);
     addbinding(pyInputTerrainRadiometry);
     addbinding(pyOutputTerrainRadiometry);
     addbinding(pyRtcAlgorithm);
@@ -58,14 +62,18 @@ void addsubmodule_geometry(py::module & m)
     addbinding(pyGeo2RdrParams);
     addbinding(pyRdr2GeoParams);
 
-    addbinding_apply_rtc(geometry);
-    addbinding_compute_rtc(geometry);
-    addbinding_compute_rtc_bbox(geometry);
+    addbinding_apply_rtc<isce3::product::RadarGridParameters>(geometry);
+    addbinding_compute_rtc<isce3::product::RadarGridParameters>(geometry);
+    addbinding_compute_rtc_bbox<isce3::product::RadarGridParameters>(geometry);
     addbinding_get_geolocation_grid(geometry);
     addbinding_geo2rdr(geometry);
     addbinding_geo2rdr_roots(geometry);
+    addbinding_geo2rdr_grid<isce3::product::RadarGridParameters>(geometry);
+    addbinding_geo2rdr_grid<isce3::product::PolarGridParameters>(geometry);
     addbinding_rdr2geo(geometry);
     addbinding_rdr2geo_roots(geometry);
+    addbinding_rdr2geo_grid<isce3::product::RadarGridParameters>(geometry);
+    addbinding_rdr2geo_grid<isce3::product::PolarGridParameters>(geometry);
     addbinding_boundingbox(geometry);
     addbinding_metadata_cubes(geometry);
     addbinding_ltp_coordinates(geometry);

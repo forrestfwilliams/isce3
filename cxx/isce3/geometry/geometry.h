@@ -184,6 +184,15 @@ int geo2rdr(const isce3::core::Vec3& inputLLH,
         double& slantRange, double wavelength, isce3::core::LookSide side,
         double threshold, int maxIter, double deltaRange);
 
+// PFA-based geo2rdr
+int geo2rdr(const isce3::core::Vec3& inputLLH,
+        const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::core::Orbit& orbit,
+        const isce3::core::EMatrix2D<double, 2, 2>& polarMatrixInv,
+        double aztime, double centerRange, double centerRangeRate,
+        double rangeSceneCenter, double azimuthSceneCenter, double rangePixelSpacing,
+        double azimuthPixelSpacing, double& range_distance, double& azimuth_distance);
+
 /**
  * Utility function to compute geographic bounds for a radar grid
  *
@@ -405,5 +414,34 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lookIncAngFromSlantRange(
  */
 double compute_mean_dem(const DEMInterpolator& dem);
 
+int geo2rdrGrid(const isce3::core::Vec3& inputLLH, const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::core::Orbit& orbit, const isce3::core::LUT2d<double>& doppler, double& aztime,
+        double& slantRange, const isce3::product::RadarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge = true);
+
+int geo2rdrGrid(const isce3::core::Vec3& inputLLH, const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::core::Orbit& orbit, const isce3::core::LUT2d<double>& doppler, double& azdist,
+        double& slantRange, const isce3::product::PolarGridParameters& radar_grid,
+        double threshold, int maxIter, double deltaRange,
+        bool flag_edge = true);
+
+int rdr2geoGrid(double aztime, double slantRange,
+        const isce3::core::LUT2d<double>& doppler,
+        const isce3::core::Orbit& orbit,
+        const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::geometry::DEMInterpolator& demInterp,
+        isce3::core::Vec3& targetLLH,
+        isce3::product::RadarGridParameters radarGrid,
+        double threshold, int maxIter, int extraIter);
+
+int rdr2geoGrid(double aztime, double slantRange,
+        const isce3::core::LUT2d<double>& doppler,
+        const isce3::core::Orbit& orbit,
+        const isce3::core::Ellipsoid& ellipsoid,
+        const isce3::geometry::DEMInterpolator& demInterp,
+        isce3::core::Vec3& targetLLH,
+        isce3::product::PolarGridParameters radarGrid,
+        double threshold, int maxIter, int extraIter);
 } // namespace geometry
 } // namespace isce3

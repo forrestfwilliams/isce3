@@ -17,6 +17,11 @@ void addbinding(pybind11::enum_<rtcAlgorithm> & pyRtcAlgorithm);
 void addbinding(pybind11::enum_<rtcAreaMode> & pyRtcAreaMode);
 void addbinding(pybind11::enum_<rtcAreaBetaMode> & pyRtcAreaBetaMode);
 
+template<typename T_grid>
 void addbinding_apply_rtc(pybind11::module& m);
+
+template<typename T_grid>
 void addbinding_compute_rtc(pybind11::module& m);
+
+template<typename T_grid>
 void addbinding_compute_rtc_bbox(pybind11::module& m);

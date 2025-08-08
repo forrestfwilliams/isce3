@@ -136,8 +136,9 @@ protected:
  * @param[in] threshold Height threshold (m) for rdr2geo convergence.
  * @param[in] height_threshold Height threshold for convergence.
  */
+template<typename T_grid>
 GeoGridParameters
-bbox2GeoGrid(const isce3::product::RadarGridParameters& radar_grid,
+bbox2GeoGrid(const T_grid& radar_grid,
              const isce3::core::Orbit& orbit,
              const isce3::core::LUT2d<double>& doppler, double spacing_x,
              double spacing_y, int epsg,
@@ -163,8 +164,9 @@ bbox2GeoGrid(const isce3::product::RadarGridParameters& radar_grid,
  * @param[in] threshold Height threshold (m) for rdr2geo convergence.
  * @param[in] height_threshold Height threshold for convergence.
  */
+template<typename T_grid>
 GeoGridParameters
-bbox2GeoGridScaled(const isce3::product::RadarGridParameters& radar_grid,
+bbox2GeoGridScaled(const T_grid& radar_grid,
                    const isce3::core::Orbit& orbit,
                    const isce3::core::LUT2d<double>& doppler,
                    const isce3::io::Raster& dem_raster,

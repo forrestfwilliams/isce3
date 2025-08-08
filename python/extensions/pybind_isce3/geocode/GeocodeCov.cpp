@@ -24,25 +24,26 @@ using isce3::geometry::rtcInputTerrainRadiometry;
 using isce3::geometry::rtcOutputTerrainRadiometry;
 using isce3::io::Raster;
 using isce3::product::RadarGridParameters;
+using isce3::product::PolarGridParameters;
 
-template<typename T>
-void addbinding(py::class_<Geocode<T>>& pyGeocode)
+template<typename T, typename T_grid>
+void addbinding(py::class_<Geocode<T, T_grid>>& pyGeocode)
 {
     pyGeocode.def(py::init<>())
-            .def_property("orbit", nullptr, &Geocode<T>::orbit)
-            .def_property("doppler", nullptr, &Geocode<T>::doppler)
-            .def_property("native_doppler", nullptr, &Geocode<T>::nativeDoppler)
-            .def_property("ellipsoid", nullptr, &Geocode<T>::ellipsoid)
+            .def_property("orbit", nullptr, &Geocode<T, T_grid>::orbit)
+            .def_property("doppler", nullptr, &Geocode<T, T_grid>::doppler)
+            .def_property("native_doppler", nullptr, &Geocode<T, T_grid>::nativeDoppler)
+            .def_property("ellipsoid", nullptr, &Geocode<T, T_grid>::ellipsoid)
             .def_property("threshold_geo2rdr", nullptr,
-                          &Geocode<T>::thresholdGeo2rdr)
+                          &Geocode<T, T_grid>::thresholdGeo2rdr)
             .def_property("numiter_geo2rdr", nullptr,
-                          &Geocode<T>::numiterGeo2rdr)
+                          &Geocode<T, T_grid>::numiterGeo2rdr)
             .def_property("radar_block_margin", nullptr,
-                    &Geocode<T>::radarBlockMargin)
+                    &Geocode<T, T_grid>::radarBlockMargin)
             .def_property("data_interpolator",
                     py::overload_cast<>(
-                            &Geocode<T>::dataInterpolator, py::const_),
-                    [](Geocode<T>& self, py::object method) {
+                            &Geocode<T, T_grid>::dataInterpolator, py::const_),
+                    [](Geocode<T, T_grid>& self, py::object method) {
                         // get interp method
                         auto data_interpolator = duck_method(method);
 
@@ -50,22 +51,22 @@ void addbinding(py::class_<Geocode<T>>& pyGeocode)
                         self.dataInterpolator(data_interpolator);
                     })
             .def_property_readonly(
-                    "geogrid_start_x", &Geocode<T>::geoGridStartX)
+                    "geogrid_start_x", &Geocode<T, T_grid>::geoGridStartX)
             .def_property_readonly(
-                    "geogrid_start_y", &Geocode<T>::geoGridStartY)
+                    "geogrid_start_y", &Geocode<T, T_grid>::geoGridStartY)
             .def_property_readonly(
-                    "geogrid_spacing_x", &Geocode<T>::geoGridSpacingX)
+                    "geogrid_spacing_x", &Geocode<T, T_grid>::geoGridSpacingX)
             .def_property_readonly(
-                    "geogrid_spacing_y", &Geocode<T>::geoGridSpacingY)
-            .def_property_readonly("geogrid_width", &Geocode<T>::geoGridWidth)
-            .def_property_readonly("geogrid_length", &Geocode<T>::geoGridLength)
-            .def("update_geogrid", &Geocode<T>::updateGeoGrid,
+                    "geogrid_spacing_y", &Geocode<T, T_grid>::geoGridSpacingY)
+            .def_property_readonly("geogrid_width", &Geocode<T, T_grid>::geoGridWidth)
+            .def_property_readonly("geogrid_length", &Geocode<T, T_grid>::geoGridLength)
+            .def("update_geogrid", &Geocode<T, T_grid>::updateGeoGrid,
                     py::arg("radar_grid"), py::arg("dem_raster"))
-            .def("geogrid", &Geocode<T>::geoGrid, py::arg("x_start"),
+            .def("geogrid", &Geocode<T, T_grid>::geoGrid, py::arg("x_start"),
                     py::arg("y_start"), py::arg("x_spacing"),
                     py::arg("y_spacing"), py::arg("width"), py::arg("length"),
                     py::arg("epsg"))
-            .def("geocode", &Geocode<T>::geocode, py::arg("radar_grid"),
+            .def("geocode", &Geocode<T, T_grid>::geocode, py::arg("radar_grid"),
                     py::arg("input_raster"), py::arg("output_raster"),
                     py::arg("dem_raster"),
                     py::arg("output_mode") = geocodeOutputMode::AREA_PROJECTION,
@@ -275,8 +276,12 @@ void addbinding(pybind11::enum_<geocodeOutputMode>& pyGeocodeOutputMode)
             .value("AREA_PROJECTION", geocodeOutputMode::AREA_PROJECTION);
 };
 
-template void addbinding(py::class_<Geocode<float>>&);
-template void addbinding(py::class_<Geocode<double>>&);
-template void addbinding(py::class_<Geocode<std::complex<float>>>&);
-template void addbinding(py::class_<Geocode<std::complex<double>>>&);
+template void addbinding(py::class_<Geocode<float, RadarGridParameters>>&);
+template void addbinding(py::class_<Geocode<float, PolarGridParameters>>&);
+template void addbinding(py::class_<Geocode<double, RadarGridParameters>>&);
+template void addbinding(py::class_<Geocode<double, PolarGridParameters>>&);
+template void addbinding(py::class_<Geocode<std::complex<float>, RadarGridParameters>>&);
+template void addbinding(py::class_<Geocode<std::complex<float>, PolarGridParameters>>&);
+template void addbinding(py::class_<Geocode<std::complex<double>, RadarGridParameters>>&);
+template void addbinding(py::class_<Geocode<std::complex<double>, PolarGridParameters>>&);
 // end of file

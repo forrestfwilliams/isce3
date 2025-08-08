@@ -12,8 +12,9 @@
 #include <isce3/core/LookSide.h>
 #include <isce3/core/TimeDelta.h>
 #include <isce3/except/Error.h>
+#include <isce3/product/RngAzmGridParameters.h>
 
-class isce3::product::RadarGridParameters {
+class isce3::product::RadarGridParameters: public RngAzmGridParameters {
 
     public:
         /** Default constructor */
@@ -80,6 +81,9 @@ class isce3::product::RadarGridParameters {
         /** Set sensing start time in seconds since reference epoch */
         inline void sensingStart(const double & t){ _sensingStart = t; }
 
+        /** Generic sensing start time in seconds since reference epoch */
+        inline double startingAzimuth() const { return _sensingStart; }
+
         /** Get radar wavelength in meters*/
         inline double wavelength() const { return _wavelength; }
 
@@ -94,6 +98,9 @@ class isce3::product::RadarGridParameters {
 
         /** Get azimuth time interval in seconds*/
         inline double azimuthTimeInterval() const { return 1.0/_prf; };
+
+        /** Generic wrapper for azimuthTimeInterval */
+        inline double azimuthPixelSpacing() const { return azimuthTimeInterval(); };
 
         /** Get starting slant range in meters*/
         inline double startingRange() const { return _startingRange; }
@@ -129,14 +136,30 @@ class isce3::product::RadarGridParameters {
         inline double sensingMid() const {
             return 0.5 * (sensingStart() + sensingStop());
         }
+        
+        inline double azimuthMid() const {
+            return sensingMid();
+        }
 
         /** Get sensing time for a given line (zero-index row) */
         inline double sensingTime(double line) const {
             return _sensingStart + line / _prf;
         }
+
+        /** Generic name for sensingTime */
+        inline double azimuth(double line) const {
+            return sensingTime(line);
+        }
+
         /** Get azimuth fractional index (line) at a given sensing time */
         inline double azimuthIndex(double az_time) const {
             return (az_time  -  _sensingStart) * _prf;
+        }
+
+        /** Get azimuth fractional index (line) at a given sensing time 
+         * assuming you start from the outer edge */
+        inline double azimuthIndexPoint(double az_time) const {
+            return (az_time  -  (_sensingStart - (0.5/_prf))) * _prf;
         }
 
         /** Get a sensing DateTime for a given line (zero-index row) */
@@ -154,6 +177,11 @@ class isce3::product::RadarGridParameters {
             return 0.5 * (startingRange() + endingRange());
         }
 
+        /** Get middle slant range */
+        inline double slantRangeMid() const {
+            return midRange();
+        }
+
         /** Get slant range for a given sample (zero-index column) */
         inline double slantRange(double sample) const {
             return _startingRange + sample * _rangePixelSpacing;
@@ -162,6 +190,17 @@ class isce3::product::RadarGridParameters {
         /** Get slant range fractional index at a given slant range distance */
         inline double slantRangeIndex(double slant_range) const {
             return (slant_range  -  _startingRange) / _rangePixelSpacing;
+        }
+        
+        // FIXME: remove this eventually
+        inline double slantRangeIndex2(double line, double slant_range) const {
+            return (slant_range  -  _startingRange) / _rangePixelSpacing;
+        }
+
+        /** Get slant range fractional index at a given slant range distance 
+         * assuming you start from the outer edge */
+        inline double slantRangeIndexPoint(double slant_range) const {
+            return (slant_range  -  (_startingRange - (0.5 * _rangePixelSpacing))) / _rangePixelSpacing;
         }
 
         /** Crop/ Expand while keeping the spacing the same with top left offset and size */

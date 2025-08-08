@@ -17,6 +17,7 @@
 // isce3::geometry
 #include "geometry.h"
 
+namespace isce3 { namespace geometry {
 /**
  * Transformer from radar geometry coordinates to map coordinates with
  * DEM / reference altitude
@@ -24,7 +25,8 @@
  * See <a href="overview_geometry.html#forwardgeom">geometry overview</a>
  * for a description of the algorithm
  */
-class isce3::geometry::Topo {
+template<class T_grid = isce3::product::RadarGridParameters>
+class Topo {
 public:
 
     /**
@@ -46,7 +48,7 @@ public:
      * @param[in] ellipsoid Ellipsoid object
      * @param[in] doppler   LUT2d doppler model
      */
-    Topo(const isce3::product::RadarGridParameters & radarGrid,
+    Topo(const T_grid & radarGrid,
          const isce3::core::Orbit & orbit,
          const isce3::core::Ellipsoid & ellipsoid,
          const isce3::core::LUT2d<double> & doppler = {});
@@ -182,7 +184,7 @@ public:
     size_t linesPerBlock() const { return _linesPerBlock; }
 
     /** Get read-only reference to RadarGridParameters */
-    const isce3::product::RadarGridParameters & radarGridParameters() const { return _radarGrid; }
+    const T_grid & radarGridParameters() const { return _radarGrid; }
 
     /** Get DEM bounds using first/last azimuth line and slant range bin.
      * 
@@ -353,8 +355,23 @@ private:
      */
     void _initAzimuthLine(size_t line, double&,
                           isce3::core::Vec3& pos, isce3::core::Vec3& vel,
-                          isce3::core::Basis& TCNbasis);
+                          isce3::core::Basis& TCNbasis,
+                          const isce3::product::RadarGridParameters& radar_grid);
 
+    void _initAzimuthLine(size_t line, double&,
+                          isce3::core::Vec3& pos, isce3::core::Vec3& vel,
+                          isce3::core::Basis& TCNbasis,
+                          const isce3::product::PolarGridParameters& radar_grid);
+
+    void _initRangePixel(double& rng, isce3::core::Pixel& pixel,
+                        size_t rbin, const double tline, 
+                        const isce3::core::Vec3 vel,
+                        isce3::product::RadarGridParameters radarGrid);
+
+    void _initRangePixel(double& rng, isce3::core::Pixel& pixel,
+                        size_t rbin, const double tline, 
+                        const isce3::core::Vec3 vel,
+                        isce3::product::PolarGridParameters radarGrid);
     /**
      * Write to output layers
      *
@@ -403,7 +420,7 @@ private:
     isce3::core::LUT2d<double> _doppler;
 
     // RadarGridParameters
-    isce3::product::RadarGridParameters _radarGrid;
+    T_grid _radarGrid;
 
     // Optimization options
     double _threshold = 1.0e-8;   //Threshold for convergence of slant range
@@ -421,6 +438,7 @@ private:
     int _epsgOut;
     isce3::core::ProjectionBase * _proj;
 };
+}}
 
 // Get inline implementations for Topo
 #define ISCE_GEOMETRY_TOPO_ICC

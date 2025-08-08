@@ -3,6 +3,7 @@
 #include <isce3/core/LUT2d.h>
 
 //isce3::product
+#include <isce3/product/PolarGridParameters.h>
 #include <isce3/product/RadarGridParameters.h>
 #include <isce3/product/GeoGridParameters.h>
 //isce3::geometry
@@ -50,7 +51,8 @@ struct RadarGridBoundingBox {
  * then in the right-looking case the edges follow a 12341 ordering.  For the
  * left-looking case, the edges follow a 14321 ordering instead.
  */
-Perimeter getGeoPerimeter(const isce3::product::RadarGridParameters& radarGrid,
+template<class T_grid>
+Perimeter getGeoPerimeter(const T_grid& radarGrid,
         const isce3::core::Orbit& orbit,
         const isce3::core::ProjectionBase* proj,
         const isce3::core::LUT2d<double>& doppler = {},
@@ -74,8 +76,9 @@ Perimeter getGeoPerimeter(const isce3::product::RadarGridParameters& radarGrid,
  *
  * The output of this method is an OGREnvelope.
  */
+template<class T_grid>
 BoundingBox getGeoBoundingBox(
-        const isce3::product::RadarGridParameters& radarGrid,
+        const T_grid& radarGrid,
         const isce3::core::Orbit& orbit,
         const isce3::core::ProjectionBase* proj,
         const isce3::core::LUT2d<double>& doppler = {},
@@ -103,8 +106,9 @@ BoundingBox getGeoBoundingBox(
  * @param[in] height_threshold Height threshold for convergence
  * The output of this method is an OGREnvelope.
  */
+template<class T_grid>
 BoundingBox getGeoBoundingBoxHeightSearch(
-        const isce3::product::RadarGridParameters& radarGrid,
+        const T_grid& radarGrid,
         const isce3::core::Orbit& orbit,
         const isce3::core::ProjectionBase* proj,
         const isce3::core::LUT2d<double>& doppler = {},

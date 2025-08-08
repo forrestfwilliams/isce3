@@ -10,9 +10,11 @@
 
 #include <isce3/core/Projections.h>
 
+namespace isce3 { namespace geometry { 
+
+template<typename T_grid>
 inline
-isce3::geometry::Topo::
-Topo(const isce3::product::RadarGridParameters & radarGrid,
+Topo<T_grid>::Topo(const T_grid & radarGrid,
      const isce3::core::Orbit & orbit,
      const isce3::core::Ellipsoid & ellipsoid,
      const isce3::core::LUT2d<double> & doppler)
@@ -27,9 +29,9 @@ Topo(const isce3::product::RadarGridParameters & radarGrid,
     _linesPerBlock = std::min(_radarGrid.length(), _linesPerBlock);
 }
 
+template<typename T_grid>
 inline
-isce3::geometry::Topo::
-Topo(const isce3::core::Ellipsoid & ellipsoid, const isce3::core::Orbit & orbit,
+Topo<T_grid>::Topo(const isce3::core::Ellipsoid & ellipsoid, const isce3::core::Orbit & orbit,
      const isce3::core::LUT2d<double> & doppler, const isce3::core::Metadata & meta)
 :
     _orbit(orbit),
@@ -41,9 +43,9 @@ Topo(const isce3::core::Ellipsoid & ellipsoid, const isce3::core::Orbit & orbit,
     _linesPerBlock = std::min(_radarGrid.length(), _linesPerBlock);
 }
 
+template<typename T_grid>
 inline
-void isce3::geometry::Topo::
-demMethod(isce3::core::dataInterpMethod method)
+void Topo<T_grid>::demMethod(isce3::core::dataInterpMethod method)
 {
     // Check validity
     if ((method != isce3::core::SINC_METHOD) && (method != isce3::core::BILINEAR_METHOD) &&
@@ -60,14 +62,15 @@ demMethod(isce3::core::dataInterpMethod method)
     _demMethod = method;
 }
 
+template<typename T_grid>
 inline
-void isce3::geometry::Topo::
-epsgOut(int epsgcode)
+void Topo<T_grid>::epsgOut(int epsgcode)
 {
     // Save the code
     _epsgOut = epsgcode;
     // Initialize the projection
     _proj = isce3::core::createProj(epsgcode);
 }
+}}
 
 // end of file

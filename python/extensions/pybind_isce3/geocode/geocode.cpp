@@ -5,6 +5,7 @@
 #include "GeocodeSlc.h"
 
 namespace py = pybind11;
+using isce3::product::PolarGridParameters;
 
 void addsubmodule_geocode(py::module & m)
 {
@@ -22,6 +23,15 @@ void addsubmodule_geocode(py::module & m)
         pyGeocodeCFloat32(geocode, "GeocodeCFloat32");
     py::class_<isce3::geocode::Geocode<std::complex<double>>>
         pyGeocodeCFloat64(geocode, "GeocodeCFloat64");
+
+    py::class_<isce3::geocode::Geocode<float, PolarGridParameters>>
+        pyGeocodePolarFloat32(geocode, "GeocodePolarFloat32");
+    py::class_<isce3::geocode::Geocode<double, PolarGridParameters>>
+        pyGeocodePolarFloat64(geocode, "GeocodePolarFloat64");
+    py::class_<isce3::geocode::Geocode<std::complex<float>, PolarGridParameters>>
+        pyGeocodePolarCFloat32(geocode, "GeocodePolarCFloat32");
+    py::class_<isce3::geocode::Geocode<std::complex<double>, PolarGridParameters>>
+        pyGeocodePolarCFloat64(geocode, "GeocodePolarCFloat64");
 
     py::class_<isce3::geocode::GeocodePolygon<float>>
         pyGeocodePolygonFloat32(geocode, "GeocodePolygonFloat32");
@@ -41,6 +51,11 @@ void addsubmodule_geocode(py::module & m)
     addbinding(pyGeocodeFloat64);
     addbinding(pyGeocodeCFloat32);
     addbinding(pyGeocodeCFloat64);
+
+    addbinding(pyGeocodePolarFloat32);
+    addbinding(pyGeocodePolarFloat64);
+    addbinding(pyGeocodePolarCFloat32);
+    addbinding(pyGeocodePolarCFloat64);
 
     addbinding(pyGeocodePolygonFloat32);
     addbinding(pyGeocodePolygonFloat64);

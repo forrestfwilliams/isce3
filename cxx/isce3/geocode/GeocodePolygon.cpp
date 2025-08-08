@@ -14,7 +14,6 @@
 #include <isce3/geometry/geometry.h>
 #include <isce3/core/TypeTraits.h>
 
-
 namespace isce3 { namespace geocode {
 
 template <class T>
@@ -382,7 +381,7 @@ void GeocodePolygon<T>::_getPolygonMean(
         output_radargrid_data_array.fill(std::numeric_limits<T_out>::quiet_NaN());
     }
 
-    Geocode<T> geo_obj;
+    Geocode<T, isce3::product::RadarGridParameters> geo_obj;
     for (int y = 0; y < _ysize; ++y)
         for (int x = 0; x < _xsize; ++x) {
             double w = w_arr(y, x);
